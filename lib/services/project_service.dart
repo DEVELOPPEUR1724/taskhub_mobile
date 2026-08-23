@@ -35,14 +35,11 @@ class ProjectService {
     }
   }
 
-  // Seule route qui expose une liste d'utilisateurs (id + nom) côté API :
-  // pas d'endpoint /users dédié, donc on passe par les membres d'un projet
-  // pour peupler le choix des participants d'une conversation.
-  Future<List<ProjectMember>> getProjectMembers(int projectId) async {
+  Future<Project> getProjectById(int id) async {
     final token = await _requireToken();
 
     final response = await http.get(
-      Uri.parse("${ClientService.baseUrl}/projects/$projectId"),
+      Uri.parse("${ClientService.baseUrl}/projects/$id"),
       headers: {
         "Accept": "application/json",
         "Content-Type": "application/json",
@@ -51,9 +48,8 @@ class ProjectService {
     );
 
     if (response.statusCode == 200) {
-      final Map<String, dynamic> json = jsonDecode(response.body);
-      final List<dynamic> members = json['members'] ?? [];
-      return members.map((e) => ProjectMember.fromJson(e)).toList();
+      final json = jsonDecode(response.body);
+      return Project.fromJson(json);
     } else {
       final error = jsonDecode(response.body);
       throw Exception(error['message']);
