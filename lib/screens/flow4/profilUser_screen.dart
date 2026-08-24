@@ -1,5 +1,15 @@
 import 'package:flutter/material.dart';
 
+import '../../models/profile.dart';
+import '../../services/profil_service.dart';
+import '../../services/auth_service.dart';
+import '../flow1/login_screen.dart';
+import 'editProfil_screen.dart';
+import 'security_screen.dart';
+
+final _profilService = ProfilService();
+final _authService = AuthService();
+
 const _adaiOrange = Color(0xFFB5651D);
 
 class ProfilUserScreen extends StatefulWidget {
@@ -10,16 +20,40 @@ class ProfilUserScreen extends StatefulWidget {
 }
 
 class _ProfilUserScreenState extends State<ProfilUserScreen> {
+  Profile? _profile;
+  bool _isLoading = true;
+  String? _errorMessage;
   bool _pushNotificationsEnabled = true;
+  final String _language = 'Français'; // préférence locale, pas dans l'API
 
-  // TODO: remplacer par les vraies données utilisateur (via API/session)
-  final String _userName = 'Mirindra Rakotomalala';
-  final String _userRole = 'Chef de projet';
-  final String _userAvatarUrl = 'https://i.pravatar.cc/200?img=12';
-  final String _language = 'Français';
+  @override
+  void initState() {
+    super.initState();
+    _loadProfil();
+  }
+
+  Future<void> _loadProfil() async {
+    setState(() {
+      _isLoading = true;
+      _errorMessage = null;
+    });
+    try {
+      final profile = await _profilService.getProfil();
+      if (!mounted) return;
+      setState(() {
+        _profile = profile;
+        _isLoading = false;
+      });
+    } catch (e) {
+      if (!mounted) return;
+      setState(() {
+        _isLoading = false;
+        _errorMessage = 'Erreur lors du chargement du profil';
+      });
+    }
+  }
 
   void _logout() {
-    // TODO: brancher la vraie déconnexion (clear session/token + redirection LoginScreen)
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
@@ -31,7 +65,15 @@ class _ProfilUserScreenState extends State<ProfilUserScreen> {
             child: const Text('Annuler'),
           ),
           TextButton(
-            onPressed: () => Navigator.of(context).pop(),
+            onPressed: () async {
+              Navigator.of(context).pop();
+              await _authService.logout();
+              if (!mounted) return;
+              Navigator.of(context).pushAndRemoveUntil(
+                MaterialPageRoute(builder: (context) => const LoginScreen()),
+                (route) => false,
+              );
+            },
             style: TextButton.styleFrom(foregroundColor: Colors.red),
             child: const Text('Se déconnecter'),
           ),
@@ -44,212 +86,211 @@ class _ProfilUserScreenState extends State<ProfilUserScreen> {
   Widget build(BuildContext context) {
     return Material(
       color: Colors.white,
-      child: SingleChildScrollView(
-        padding: const EdgeInsets.fromLTRB(20, 16, 20, 24),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                const Text(
-                  'Mon profil',
-                  style: TextStyle(
-                    fontSize: 24,
-                    fontWeight: FontWeight.bold,
-                    color: Colors.black,
-                  ),
-                ),
-                const CircleAvatar(
-                  radius: 20,
-                  backgroundImage: NetworkImage(
-                    'https://dashboard-wally-process-interne.adaiexpertise.fr/logo_sans_fond.png',
-                  ),
-                  backgroundColor: Colors.transparent,
-                ),
-              ],
-            ),
-            const SizedBox(height: 20),
-
-            Row(
-              children: [
-                CircleAvatar(
-                  radius: 32,
-                  backgroundImage: NetworkImage(_userAvatarUrl),
-                ),
-                const SizedBox(width: 14),
-                Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      _userName,
-                      style: const TextStyle(
-                        fontSize: 16,
-                        fontWeight: FontWeight.w700,
-                        color: Colors.black,
-                      ),
-                    ),
-                    const SizedBox(height: 2),
-                    Text(
-                      _userRole,
-                      style: TextStyle(color: Colors.grey.shade600, fontSize: 13),
-                    ),
-                    const SizedBox(height: 6),
-                    Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
-                      decoration: BoxDecoration(
-                        color: const Color(0xFFE5F5E9),
-                        borderRadius: BorderRadius.circular(12),
-                      ),
-                      child: Row(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          Container(
-                            width: 6,
-                            height: 6,
-                            decoration: const BoxDecoration(
-                              color: Color(0xFF3A9B54),
-                              shape: BoxShape.circle,
-                            ),
-                          ),
-                          const SizedBox(width: 5),
-                          const Text(
-                            'En ligne',
-                            style: TextStyle(
-                              fontSize: 11,
-                              color: Color(0xFF3A9B54),
-                              fontWeight: FontWeight.w600,
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                  ],
-                ),
-              ],
-            ),
-            const SizedBox(height: 24),
-
-            Container(
-              padding: const EdgeInsets.all(14),
-              decoration: BoxDecoration(
-                border: Border.all(color: Colors.grey.shade200),
-                borderRadius: BorderRadius.circular(14),
-              ),
-              child: Row(
-                children: [
-                  Container(
-                    width: 40,
-                    height: 40,
-                    decoration: BoxDecoration(
-                      color: const Color(0xFFFDF0DE),
-                      borderRadius: BorderRadius.circular(10),
-                    ),
-                    child: const Icon(Icons.notifications_none, color: _adaiOrange, size: 20),
-                  ),
-                  const SizedBox(width: 12),
-                  Expanded(
+      child: _isLoading
+          ? const Center(child: CircularProgressIndicator())
+          : _errorMessage != null
+              ? Center(
+                  child: Padding(
+                    padding: const EdgeInsets.all(24),
                     child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
+                      mainAxisSize: MainAxisSize.min,
                       children: [
-                        const Text(
-                          'Notifications push',
-                          style: TextStyle(fontWeight: FontWeight.w700, fontSize: 14, color: Colors.black),
-                        ),
-                        const SizedBox(height: 2),
                         Text(
-                          'Recevoir les notifications sur votre appareil',
-                          style: TextStyle(color: Colors.grey.shade600, fontSize: 12),
+                          _errorMessage!,
+                          textAlign: TextAlign.center,
+                          style: TextStyle(color: Colors.grey.shade600),
                         ),
+                        const SizedBox(height: 12),
+                        TextButton(onPressed: _loadProfil, child: const Text('Réessayer')),
                       ],
                     ),
                   ),
-                  Switch(
-                    value: _pushNotificationsEnabled,
-                    activeColor: _adaiOrange,
-                    onChanged: (value) => setState(() => _pushNotificationsEnabled = value),
-                  ),
-                ],
-              ),
-            ),
-            const SizedBox(height: 24),
+                )
+              : _buildContent(_profile!),
+    );
+  }
 
-            const Text(
-              'Mon compte',
-              style: TextStyle(fontSize: 16, fontWeight: FontWeight.w700, color: Colors.black),
-            ),
-            const SizedBox(height: 12),
-
-            Container(
-              decoration: BoxDecoration(
-                border: Border.all(color: Colors.grey.shade200),
-                borderRadius: BorderRadius.circular(14),
+  Widget _buildContent(Profile profile) {
+    return SingleChildScrollView(
+      padding: const EdgeInsets.fromLTRB(20, 16, 20, 24),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              const Text(
+                'Mon profil',
+                style: TextStyle(
+                  fontSize: 24,
+                  fontWeight: FontWeight.bold,
+                  color: Colors.black,
+                ),
               ),
-              child: Column(
+              const CircleAvatar(
+                radius: 20,
+                backgroundImage: NetworkImage(
+                  'https://dashboard-wally-process-interne.adaiexpertise.fr/logo_sans_fond.png',
+                ),
+                backgroundColor: Colors.transparent,
+              ),
+            ],
+          ),
+          const SizedBox(height: 20),
+
+          Row(
+            children: [
+              CircleAvatar(
+                radius: 32,
+                backgroundImage: NetworkImage('https://i.pravatar.cc/200?u=${profile.id}'),
+              ),
+              const SizedBox(width: 14),
+              Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  _AccountRow(
-                    icon: Icons.person_outline,
-                    label: 'Informations personnelles',
-                    onTap: () {
-                      // TODO: naviguer vers l'écran d'informations personnelles
-                    },
+                  Text(
+                    profile.name,
+                    style: const TextStyle(
+                      fontSize: 16,
+                      fontWeight: FontWeight.w700,
+                      color: Colors.black,
+                    ),
                   ),
-                  Divider(height: 1, color: Colors.grey.shade100),
-                  _AccountRow(
-                    icon: Icons.verified_user_outlined,
-                    label: 'Sécurité',
-                    onTap: () {
-                      // TODO: naviguer vers l'écran de sécurité
-                    },
-                  ),
-                  Divider(height: 1, color: Colors.grey.shade100),
-                  _AccountRow(
-                    icon: Icons.language_outlined,
-                    label: 'Langue',
-                    trailingText: _language,
-                    onTap: () {
-                      // TODO: afficher le sélecteur de langue
-                    },
-                  ),
-                  Divider(height: 1, color: Colors.grey.shade100),
-                  _AccountRow(
-                    icon: Icons.info_outline,
-                    label: 'À propos',
-                    onTap: () {
-                      // TODO: naviguer vers l'écran à propos
-                    },
+                  const SizedBox(height: 2),
+                  Text(
+                    profile.role,
+                    style: TextStyle(color: Colors.grey.shade600, fontSize: 13),
                   ),
                 ],
               ),
-            ),
-            const SizedBox(height: 24),
+            ],
+          ),
+          const SizedBox(height: 24),
 
-            SizedBox(
-              width: double.infinity,
-              height: 48,
-              child: OutlinedButton.icon(
-                onPressed: _logout,
-                icon: const Icon(Icons.logout, color: Colors.red, size: 18),
-                label: const Text(
-                  'Se déconnecter',
-                  style: TextStyle(color: Colors.red, fontSize: 15, fontWeight: FontWeight.w600),
-                ),
-                style: OutlinedButton.styleFrom(
-                  side: const BorderSide(color: Colors.red),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(8),
+          Container(
+            padding: const EdgeInsets.all(14),
+            decoration: BoxDecoration(
+              border: Border.all(color: Colors.grey.shade200),
+              borderRadius: BorderRadius.circular(14),
+            ),
+            child: Row(
+              children: [
+                Container(
+                  width: 40,
+                  height: 40,
+                  decoration: BoxDecoration(
+                    color: const Color(0xFFFDF0DE),
+                    borderRadius: BorderRadius.circular(10),
                   ),
+                  child: const Icon(Icons.notifications_none, color: _adaiOrange, size: 20),
+                ),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      const Text(
+                        'Notifications push',
+                        style: TextStyle(fontWeight: FontWeight.w700, fontSize: 14, color: Colors.black),
+                      ),
+                      const SizedBox(height: 2),
+                      Text(
+                        'Recevoir les notifications sur votre appareil',
+                        style: TextStyle(color: Colors.grey.shade600, fontSize: 12),
+                      ),
+                    ],
+                  ),
+                ),
+                Switch(
+                  value: _pushNotificationsEnabled,
+                  activeColor: _adaiOrange,
+                  onChanged: (value) => setState(() => _pushNotificationsEnabled = value),
+                ),
+              ],
+            ),
+          ),
+          const SizedBox(height: 24),
+
+          const Text(
+            'Mon compte',
+            style: TextStyle(fontSize: 16, fontWeight: FontWeight.w700, color: Colors.black),
+          ),
+          const SizedBox(height: 12),
+
+          Container(
+            decoration: BoxDecoration(
+              border: Border.all(color: Colors.grey.shade200),
+              borderRadius: BorderRadius.circular(14),
+            ),
+            child: Column(
+              children: [
+                _AccountRow(
+                  icon: Icons.person_outline,
+                  label: 'Informations personnelles',
+                  onTap: () async {
+                    final updated = await Navigator.of(context).push<Profile>(
+                      MaterialPageRoute(builder: (context) => EditProfilScreen(profile: profile)),
+                    );
+                    if (updated != null) setState(() => _profile = updated);
+                  },
+                ),
+                Divider(height: 1, color: Colors.grey.shade100),
+                _AccountRow(
+                  icon: Icons.verified_user_outlined,
+                  label: 'Sécurité',
+                  onTap: () {
+                    Navigator.of(context).push(
+                      MaterialPageRoute(builder: (context) => const SecurityScreen()),
+                    );
+                  },
+                ),
+                Divider(height: 1, color: Colors.grey.shade100),
+                _AccountRow(
+                  icon: Icons.language_outlined,
+                  label: 'Langue',
+                  trailingText: _language,
+                  onTap: () {
+                    // TODO: afficher le sélecteur de langue
+                  },
+                ),
+                Divider(height: 1, color: Colors.grey.shade100),
+                _AccountRow(
+                  icon: Icons.info_outline,
+                  label: 'À propos',
+                  onTap: () {
+                    // TODO: naviguer vers l'écran à propos
+                  },
+                ),
+              ],
+            ),
+          ),
+          const SizedBox(height: 24),
+
+          SizedBox(
+            width: double.infinity,
+            height: 48,
+            child: OutlinedButton.icon(
+              onPressed: _logout,
+              icon: const Icon(Icons.logout, color: Colors.red, size: 18),
+              label: const Text(
+                'Se déconnecter',
+                style: TextStyle(color: Colors.red, fontSize: 15, fontWeight: FontWeight.w600),
+              ),
+              style: OutlinedButton.styleFrom(
+                side: const BorderSide(color: Colors.red),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(8),
                 ),
               ),
             ),
-            const SizedBox(height: 10),
-            Text(
-              'Vous serez déconnecté et votre session sera révoquée sur tous vos appareils.',
-              textAlign: TextAlign.center,
-              style: TextStyle(color: Colors.grey.shade500, fontSize: 12),
-            ),
-          ],
-        ),
+          ),
+          const SizedBox(height: 10),
+          Text(
+            'Vous serez déconnecté et votre session sera révoquée sur tous vos appareils.',
+            textAlign: TextAlign.center,
+            style: TextStyle(color: Colors.grey.shade500, fontSize: 12),
+          ),
+        ],
       ),
     );
   }

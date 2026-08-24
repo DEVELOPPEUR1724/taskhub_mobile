@@ -52,4 +52,25 @@ class AuthService {
       );
     }
   }
+
+  Future<void> logout() async {
+    final prefs = await SharedPreferences.getInstance();
+    final token = prefs.getString('token');
+    if (token != null) {
+      try {
+        await http.post(
+          Uri.parse("${ClientService.baseUrl}/auth/logout"),
+          headers: {
+            "Accept": "application/json",
+            "Authorization": "Bearer $token",
+          },
+        );
+      } catch (_) {
+        // Si l'appel réseau échoue, on efface quand même la session locale.
+      }
+    }
+    await prefs.remove('token');
+    await prefs.remove('user_id');
+  }
+
 }

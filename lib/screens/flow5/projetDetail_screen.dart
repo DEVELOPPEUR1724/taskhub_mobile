@@ -5,7 +5,6 @@ import '../../services/project_service.dart';
 import '../../utils/project_status.dart';
 
 const _adaiOrange = Color(0xFFB5651D);
-const _purple = Color(0xFF7C5CE0);
 
 final _projectService = ProjectService();
 
@@ -194,7 +193,7 @@ class _ProjetDetailScreenState extends State<ProjetDetailScreen> {
             ),
             Text(
               '${project.progress}%',
-              style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w800, color: _purple),
+              style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w800, color: projectProgressColor),
             ),
           ],
         ),
@@ -205,7 +204,7 @@ class _ProjetDetailScreenState extends State<ProjetDetailScreen> {
             value: project.progress / 100,
             minHeight: 8,
             backgroundColor: Colors.grey.shade100,
-            valueColor: const AlwaysStoppedAnimation(_purple),
+            valueColor: const AlwaysStoppedAnimation(projectProgressColor),
           ),
         ),
         const SizedBox(height: 6),

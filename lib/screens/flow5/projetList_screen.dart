@@ -90,22 +90,7 @@ class _ProjetListScreenState extends State<ProjetListScreen> {
   Widget build(BuildContext context) {
     return Material(
       color: Colors.white,
-      child: Stack(
-        children: [
-          _buildBody(context),
-          Positioned(
-            right: 16,
-            bottom: 16,
-            child: FloatingActionButton(
-              backgroundColor: _purple,
-              onPressed: () {
-                // TODO: créer un nouveau projet
-              },
-              child: const Icon(Icons.add, color: Colors.white),
-            ),
-          ),
-        ],
-      ),
+      child: _buildBody(context),
     );
   }
 
@@ -411,7 +396,7 @@ class _ProjectCard extends StatelessWidget {
                 value: project.progress / 100,
                 minHeight: 6,
                 backgroundColor: Colors.grey.shade100,
-                valueColor: AlwaysStoppedAnimation(color),
+                valueColor: const AlwaysStoppedAnimation(projectProgressColor),
               ),
             ),
           ],

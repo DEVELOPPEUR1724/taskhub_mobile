@@ -36,6 +36,7 @@ String projectPriorityLabel(String? priority) {
   }
 }
 
+// Palette multicolore pour les avatars de projet (un ton différent par id).
 const List<Color> projectColorPalette = [
   Color(0xFF7C5CE0),
   Color(0xFF3A9B54),
@@ -45,3 +46,7 @@ const List<Color> projectColorPalette = [
 ];
 
 Color projectColorFor(int id) => projectColorPalette[id % projectColorPalette.length];
+
+// Couleur du thème (marron) utilisée pour la barre de progression, distincte
+// de la couleur d'avatar.
+const Color projectProgressColor = Color(0xFFB5651D);
