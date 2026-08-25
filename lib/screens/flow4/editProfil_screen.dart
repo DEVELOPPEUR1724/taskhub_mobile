@@ -3,7 +3,7 @@ import 'package:flutter/material.dart';
 import '../../models/profile.dart';
 import '../../services/profil_service.dart';
 
-const _adaiOrange = Color(0xFFB5651D);
+const _adaiOrange = Color(0xFFE57A44);
 final _profilService = ProfilService();
 
 class EditProfilScreen extends StatefulWidget {
@@ -40,22 +40,19 @@ class _EditProfilScreenState extends State<EditProfilScreen> {
       if (!mounted) return;
       setState(() => _isSaving = false);
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(e.toString().replaceFirst('Exception: ', '')), backgroundColor: Colors.red),
+        SnackBar(content: Text(e.toString().replaceFirst('Exception: ', '')), backgroundColor: const Color(0xFFFF453A)),
       );
     }
   }
 
   @override
   Widget build(BuildContext context) {
+    final colors = Theme.of(context).colorScheme;
     return Scaffold(
-      backgroundColor: Colors.white,
       appBar: AppBar(
-        backgroundColor: Colors.white,
-        elevation: 0,
-        iconTheme: const IconThemeData(color: Colors.black87),
         title: const Text(
           'Informations personnelles',
-          style: TextStyle(color: Colors.black, fontWeight: FontWeight.w700, fontSize: 16),
+          style: TextStyle(fontWeight: FontWeight.w700, fontSize: 16),
         ),
       ),
       body: SafeArea(
@@ -68,7 +65,7 @@ class _EditProfilScreenState extends State<EditProfilScreen> {
               controller: _nameController,
               decoration: InputDecoration(
                 filled: true,
-                fillColor: const Color(0xFFF5F5F5),
+                fillColor: colors.surfaceContainerHighest,
                 border: OutlineInputBorder(borderRadius: BorderRadius.circular(10), borderSide: BorderSide.none),
                 contentPadding: const EdgeInsets.all(14),
               ),
@@ -81,7 +78,7 @@ class _EditProfilScreenState extends State<EditProfilScreen> {
               keyboardType: TextInputType.emailAddress,
               decoration: InputDecoration(
                 filled: true,
-                fillColor: const Color(0xFFF5F5F5),
+                fillColor: colors.surfaceContainerHighest,
                 border: OutlineInputBorder(borderRadius: BorderRadius.circular(10), borderSide: BorderSide.none),
                 contentPadding: const EdgeInsets.all(14),
               ),

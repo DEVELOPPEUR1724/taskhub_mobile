@@ -6,7 +6,7 @@ import '../../models/conversation.dart' as api;
 import '../../models/message.dart' as msg;
 import '../../utils/file_icon.dart';
 
-const _adaiOrange = Color(0xFFB5651D);
+const _adaiOrange = Color(0xFFE57A44);
 
 final _chatServiceForInfo = ChatService();
 
@@ -70,18 +70,15 @@ class _ConversationInfoScreenState extends State<ConversationInfoScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final colors = Theme.of(context).colorScheme;
     final isGroup = _conversation?.isGroup ?? true;
     final members = _conversation?.members ?? const [];
 
     return Scaffold(
-      backgroundColor: Colors.white,
       appBar: AppBar(
-        backgroundColor: Colors.white,
-        elevation: 0,
-        iconTheme: const IconThemeData(color: Colors.black87),
         title: const Text(
           'À propos de la conversation',
-          style: TextStyle(color: Colors.black, fontWeight: FontWeight.w700, fontSize: 16),
+          style: TextStyle(fontWeight: FontWeight.w700, fontSize: 16),
         ),
       ),
       body: SafeArea(
@@ -107,16 +104,16 @@ class _ConversationInfoScreenState extends State<ConversationInfoScreen> {
                   const SizedBox(height: 12),
                   Text(
                     _title,
-                    style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w700, color: Colors.black),
+                    style: TextStyle(fontSize: 18, fontWeight: FontWeight.w700, color: colors.onSurface),
                   ),
                 ],
               ),
             ),
             const SizedBox(height: 24),
 
-            const Text(
+            Text(
               'Fichiers partagés',
-              style: TextStyle(fontSize: 16, fontWeight: FontWeight.w700, color: Colors.black),
+              style: TextStyle(fontSize: 16, fontWeight: FontWeight.w700, color: colors.onSurface),
             ),
             const SizedBox(height: 12),
             _buildFilesSection(),
@@ -124,13 +121,13 @@ class _ConversationInfoScreenState extends State<ConversationInfoScreen> {
 
             Text(
               'Membres (${members.length})',
-              style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w700, color: Colors.black),
+              style: TextStyle(fontSize: 16, fontWeight: FontWeight.w700, color: colors.onSurface),
             ),
             const SizedBox(height: 12),
             if (_isLoadingConversation)
               const Center(child: CircularProgressIndicator())
             else if (members.isEmpty)
-              Text('Aucun membre', style: TextStyle(color: Colors.grey.shade600))
+              Text('Aucun membre', style: TextStyle(color: colors.onSurfaceVariant))
             else
               for (final member in members) _MemberTile(member: member),
           ],
@@ -140,11 +137,12 @@ class _ConversationInfoScreenState extends State<ConversationInfoScreen> {
   }
 
   Widget _buildFilesSection() {
+    final colors = Theme.of(context).colorScheme;
     if (_isLoadingFiles) {
       return const Center(child: CircularProgressIndicator());
     }
     if (_files.isEmpty) {
-      return Text('Aucun fichier partagé', style: TextStyle(color: Colors.grey.shade600));
+      return Text('Aucun fichier partagé', style: TextStyle(color: colors.onSurfaceVariant));
     }
 
     final previewFiles = _files.take(2).toList();
@@ -178,7 +176,7 @@ class _ConversationInfoScreenState extends State<ConversationInfoScreen> {
           borderRadius: BorderRadius.circular(12),
           child: Container(
             decoration: BoxDecoration(
-              border: Border.all(color: Colors.grey.shade200),
+              border: Border.all(color: colors.outlineVariant),
               borderRadius: BorderRadius.circular(12),
             ),
             padding: const EdgeInsets.all(14),
@@ -198,19 +196,19 @@ class _ConversationInfoScreenState extends State<ConversationInfoScreen> {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      const Text(
+                      Text(
                         'Fichiers partagés',
-                        style: TextStyle(fontSize: 14, fontWeight: FontWeight.w700, color: Colors.black),
+                        style: TextStyle(fontSize: 14, fontWeight: FontWeight.w700, color: colors.onSurface),
                       ),
                       const SizedBox(height: 2),
                       Text(
                         '${_files.length} fichier${_files.length > 1 ? 's' : ''}',
-                        style: TextStyle(color: Colors.grey.shade600, fontSize: 12.5),
+                        style: TextStyle(color: colors.onSurfaceVariant, fontSize: 12.5),
                       ),
                     ],
                   ),
                 ),
-                Icon(Icons.chevron_right, size: 18, color: Colors.grey.shade400),
+                Icon(Icons.chevron_right, size: 18, color: colors.onSurfaceVariant),
               ],
             ),
           ),
@@ -220,23 +218,24 @@ class _ConversationInfoScreenState extends State<ConversationInfoScreen> {
   }
 
   Widget _buildPreviewThumbnail(msg.Message file) {
+    final colors = Theme.of(context).colorScheme;
     if (file.fileUrl == null) {
-      return Container(color: Colors.grey.shade200);
+      return Container(color: colors.surfaceContainerHighest);
     }
     if (!file.isImage) {
       return Container(
-        color: Colors.grey.shade200,
+        color: colors.surfaceContainerHighest,
         alignment: Alignment.center,
-        child: Icon(fileIconForExtension(file.fileExtension), size: 28, color: Colors.grey.shade500),
+        child: Icon(fileIconForExtension(file.fileExtension), size: 28, color: colors.onSurfaceVariant),
       );
     }
     return Image.network(
       file.fileUrl!,
       fit: BoxFit.cover,
       errorBuilder: (context, error, stackTrace) => Container(
-        color: Colors.grey.shade200,
+        color: colors.surfaceContainerHighest,
         alignment: Alignment.center,
-        child: Icon(Icons.broken_image_outlined, color: Colors.grey.shade400),
+        child: Icon(Icons.broken_image_outlined, color: colors.onSurfaceVariant),
       ),
     );
   }
@@ -249,6 +248,7 @@ class _MemberTile extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final colors = Theme.of(context).colorScheme;
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 10),
       child: Row(
@@ -264,13 +264,13 @@ class _MemberTile extends StatelessWidget {
               children: [
                 Text(
                   member.name,
-                  style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w700, color: Colors.black),
+                  style: TextStyle(fontSize: 14, fontWeight: FontWeight.w700, color: colors.onSurface),
                 ),
                 if (member.role != null) ...[
                   const SizedBox(height: 2),
                   Text(
                     member.role!,
-                    style: TextStyle(color: Colors.grey.shade600, fontSize: 12.5),
+                    style: TextStyle(color: colors.onSurfaceVariant, fontSize: 12.5),
                   ),
                 ],
               ],

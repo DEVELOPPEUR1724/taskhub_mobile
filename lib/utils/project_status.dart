@@ -1,22 +1,39 @@
 import 'package:flutter/material.dart';
 
+import '../theme/app_colors.dart';
+
 // Valeurs brutes des enums PHP ProjectStatus/ProjectPriority telles que
 // sérialisées par l'API (pas de libellé français côté backend).
-({String label, Color bg, Color fg}) projectStatusStyle(String? status) {
+({String label, Color bg, Color fg}) projectStatusStyle(BuildContext context, String? status) {
+  final AppStatusColor category;
+  final String label;
   switch (status) {
     case 'new':
-      return (label: 'Nouveau', bg: const Color(0xFFE3F0FB), fg: const Color(0xFF2E7CD6));
+      category = AppStatusColor.info;
+      label = 'Nouveau';
+      break;
     case 'in_progress':
-      return (label: 'En cours', bg: const Color(0xFFFDF0DE), fg: const Color(0xFFB5651D));
+      category = AppStatusColor.warning;
+      label = 'En cours';
+      break;
     case 'paused':
-      return (label: 'En pause', bg: const Color(0xFFECECEC), fg: const Color(0xFF616161));
+      category = AppStatusColor.neutral;
+      label = 'En pause';
+      break;
     case 'done':
-      return (label: 'Terminé', bg: const Color(0xFFE5F5E9), fg: const Color(0xFF3A9B54));
+      category = AppStatusColor.success;
+      label = 'Terminé';
+      break;
     case 'late':
-      return (label: 'En retard', bg: const Color(0xFFFCE4E4), fg: const Color(0xFFE05B33));
+      category = AppStatusColor.danger;
+      label = 'En retard';
+      break;
     default:
-      return (label: status ?? '-', bg: const Color(0xFFECECEC), fg: const Color(0xFF616161));
+      category = AppStatusColor.neutral;
+      label = status ?? '-';
   }
+  final style = statusColorFor(context, category);
+  return (label: label, bg: style.bg, fg: style.fg);
 }
 
 String projectPriorityLabel(String? priority) {
@@ -39,14 +56,14 @@ String projectPriorityLabel(String? priority) {
 // Palette multicolore pour les avatars de projet (un ton différent par id).
 const List<Color> projectColorPalette = [
   Color(0xFF7C5CE0),
-  Color(0xFF3A9B54),
+  Color(0xFF32D74B),
   Color(0xFFE0A527),
-  Color(0xFF2E7CD6),
+  Color(0xFF0A84FF),
   Color(0xFFE0709B),
 ];
 
 Color projectColorFor(int id) => projectColorPalette[id % projectColorPalette.length];
 
-// Couleur du thème (marron) utilisée pour la barre de progression, distincte
-// de la couleur d'avatar.
-const Color projectProgressColor = Color(0xFFB5651D);
+// Couleur d'accent utilisée pour la barre de progression, distincte de la
+// couleur d'avatar.
+const Color projectProgressColor = Color(0xFFE57A44);

@@ -3,7 +3,7 @@ import 'package:flutter/material.dart';
 import '../../models/project.dart';
 import '../../services/chat_service.dart';
 
-const _adaiOrange = Color(0xFFB5651D);
+const _adaiOrange = Color(0xFFE57A44);
 
 final _chatServiceForCreation = ChatService();
 
@@ -95,7 +95,7 @@ class _CreateConversationScreenState extends State<CreateConversationScreen> {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text(e.toString().replaceFirst('Exception: ', '')),
-          backgroundColor: Colors.red,
+          backgroundColor: const Color(0xFFFF453A),
         ),
       );
     }
@@ -109,16 +109,10 @@ class _CreateConversationScreenState extends State<CreateConversationScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final colors = Theme.of(context).colorScheme;
     return Scaffold(
-      backgroundColor: Colors.white,
       appBar: AppBar(
-        backgroundColor: Colors.white,
-        elevation: 0,
-        foregroundColor: Colors.black87,
-        title: const Text(
-          'Nouvelle conversation',
-          style: TextStyle(color: Colors.black87, fontWeight: FontWeight.w700),
-        ),
+        title: const Text('Nouvelle conversation', style: TextStyle(fontWeight: FontWeight.w700)),
       ),
       body: SafeArea(
         child: Column(
@@ -177,7 +171,7 @@ class _CreateConversationScreenState extends State<CreateConversationScreen> {
                       decoration: InputDecoration(
                         hintText: 'Ex : Mobile App',
                         filled: true,
-                        fillColor: const Color(0xFFF5F5F5),
+                        fillColor: colors.surfaceContainerHighest,
                         border: OutlineInputBorder(
                           borderRadius: BorderRadius.circular(10),
                           borderSide: BorderSide.none,
@@ -205,7 +199,7 @@ class _CreateConversationScreenState extends State<CreateConversationScreen> {
                   onPressed: _canSubmit && !_isSubmitting ? _submit : null,
                   style: ElevatedButton.styleFrom(
                     backgroundColor: _adaiOrange,
-                    disabledBackgroundColor: Colors.grey.shade300,
+                    disabledBackgroundColor: colors.outlineVariant,
                     foregroundColor: Colors.white,
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(8),
@@ -231,6 +225,7 @@ class _CreateConversationScreenState extends State<CreateConversationScreen> {
   }
 
   Widget _buildUsersList() {
+    final colors = Theme.of(context).colorScheme;
     if (_isLoadingUsers) {
       return const Center(child: CircularProgressIndicator());
     }
@@ -238,13 +233,13 @@ class _CreateConversationScreenState extends State<CreateConversationScreen> {
       return Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(_usersError!, style: TextStyle(color: Colors.grey.shade600)),
+          Text(_usersError!, style: TextStyle(color: colors.onSurfaceVariant)),
           TextButton(onPressed: _loadUsers, child: const Text('Réessayer')),
         ],
       );
     }
     if (_users.isEmpty) {
-      return Text('Aucun collègue disponible', style: TextStyle(color: Colors.grey.shade600));
+      return Text('Aucun collègue disponible', style: TextStyle(color: colors.onSurfaceVariant));
     }
     return Column(
       children: _users.map((user) {
@@ -252,7 +247,7 @@ class _CreateConversationScreenState extends State<CreateConversationScreen> {
         return Container(
           margin: const EdgeInsets.only(bottom: 8),
           decoration: BoxDecoration(
-            color: selected ? _adaiOrange.withOpacity(0.08) : const Color(0xFFF5F5F5),
+            color: selected ? _adaiOrange.withOpacity(0.08) : colors.surfaceContainerHighest,
             borderRadius: BorderRadius.circular(10),
             border: Border.all(color: selected ? _adaiOrange : Colors.transparent),
           ),
@@ -265,7 +260,7 @@ class _CreateConversationScreenState extends State<CreateConversationScreen> {
             subtitle: user.role != null ? Text(user.role!) : null,
             trailing: Icon(
               selected ? Icons.check_circle : Icons.circle_outlined,
-              color: selected ? _adaiOrange : Colors.grey.shade400,
+              color: selected ? _adaiOrange : colors.onSurfaceVariant,
             ),
           ),
         );
@@ -289,19 +284,20 @@ class _TypeOption extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final colors = Theme.of(context).colorScheme;
     return InkWell(
       onTap: onTap,
       borderRadius: BorderRadius.circular(12),
       child: Container(
         padding: const EdgeInsets.symmetric(vertical: 16),
         decoration: BoxDecoration(
-          color: selected ? _adaiOrange.withOpacity(0.08) : Colors.white,
-          border: Border.all(color: selected ? _adaiOrange : Colors.grey.shade300),
+          color: selected ? _adaiOrange.withOpacity(0.08) : colors.surface,
+          border: Border.all(color: selected ? _adaiOrange : colors.outlineVariant),
           borderRadius: BorderRadius.circular(12),
         ),
         child: Column(
           children: [
-            Icon(icon, size: 24, color: selected ? _adaiOrange : Colors.black87),
+            Icon(icon, size: 24, color: selected ? _adaiOrange : colors.onSurface),
             const SizedBox(height: 6),
             Text(
               label,
@@ -309,7 +305,7 @@ class _TypeOption extends StatelessWidget {
               style: TextStyle(
                 fontSize: 12.5,
                 fontWeight: FontWeight.w600,
-                color: selected ? _adaiOrange : Colors.black87,
+                color: selected ? _adaiOrange : colors.onSurface,
               ),
             ),
           ],

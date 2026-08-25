@@ -5,7 +5,7 @@ import '../../services/auth_service.dart';
 
 final authService = AuthService();
 
-const _adaiOrange = Color(0xFFB5651D);
+const _adaiOrange = Color(0xFFE57A44);
 const _adaiBrown = Color(0xFF3E2B1F);
 
 class LoginScreen extends StatefulWidget {
@@ -55,7 +55,7 @@ class _LoginScreenState extends State<LoginScreen> {
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
         content: Text(e.toString().replaceFirst('Exception: ', '')),
-        backgroundColor: Colors.red,
+        backgroundColor: const Color(0xFFFF453A),
       ),
     );
   } finally {
@@ -69,8 +69,8 @@ class _LoginScreenState extends State<LoginScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final colors = Theme.of(context).colorScheme;
     return Scaffold(
-      backgroundColor: Colors.white,
       body: SafeArea(
         child: Center(
           child: SingleChildScrollView(
@@ -90,13 +90,13 @@ class _LoginScreenState extends State<LoginScreen> {
                         const SizedBox(height: 110),
                   ),
                   const SizedBox(height: 12),
-                  const Text(
+                  Text(
                     'ADAI',
                     style: TextStyle(
                       fontSize: 28,
                       fontWeight: FontWeight.bold,
                       letterSpacing: 4,
-                      color: _adaiBrown,
+                      color: colors.brightness == Brightness.dark ? Colors.white : _adaiBrown,
                     ),
                   ),
                   const Text(
@@ -109,19 +109,19 @@ class _LoginScreenState extends State<LoginScreen> {
                     ),
                   ),
                   const SizedBox(height: 24),
-                  const Text(
+                  Text(
                     'Bienvenue',
                     style: TextStyle(
                       fontSize: 22,
                       fontWeight: FontWeight.bold,
-                      color: Colors.black87,
+                      color: colors.onSurface,
                     ),
                   ),
                   const SizedBox(height: 6),
                   Text(
                     'Connectez-vous à votre espace\nde pilotage',
                     textAlign: TextAlign.center,
-                    style: TextStyle(color: Colors.grey.shade600, fontSize: 14),
+                    style: TextStyle(color: colors.onSurfaceVariant, fontSize: 14),
                   ),
                   const SizedBox(height: 28),
 
@@ -227,12 +227,12 @@ class _LoginScreenState extends State<LoginScreen> {
 
                   Row(
                     children: [
-                      Expanded(child: Divider(color: Colors.grey.shade300)),
+                      Expanded(child: Divider(color: colors.outlineVariant)),
                       Padding(
                         padding: const EdgeInsets.symmetric(horizontal: 12),
-                        child: Text('ou', style: TextStyle(color: Colors.grey.shade500)),
+                        child: Text('ou', style: TextStyle(color: colors.onSurfaceVariant)),
                       ),
-                      Expanded(child: Divider(color: Colors.grey.shade300)),
+                      Expanded(child: Divider(color: colors.outlineVariant)),
                     ],
                   ),
                   const SizedBox(height: 16),
@@ -245,8 +245,8 @@ class _LoginScreenState extends State<LoginScreen> {
                       icon: const Icon(Icons.fingerprint),
                       label: const Text('Se connecter avec biométrie'),
                       style: OutlinedButton.styleFrom(
-                        foregroundColor: Colors.black87,
-                        side: BorderSide(color: Colors.grey.shade300),
+                        foregroundColor: colors.onSurface,
+                        side: BorderSide(color: colors.outlineVariant),
                         shape: RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(8),
                         ),
@@ -258,11 +258,11 @@ class _LoginScreenState extends State<LoginScreen> {
                   Row(
                     mainAxisSize: MainAxisSize.min,
                     children: [
-                      Icon(Icons.shield_outlined, size: 16, color: Colors.grey.shade500),
+                      Icon(Icons.shield_outlined, size: 16, color: colors.onSurfaceVariant),
                       const SizedBox(width: 6),
                       Text(
                         'Accès réservé aux utilisateurs invités',
-                        style: TextStyle(color: Colors.grey.shade500, fontSize: 12),
+                        style: TextStyle(color: colors.onSurfaceVariant, fontSize: 12),
                       ),
                     ],
                   ),

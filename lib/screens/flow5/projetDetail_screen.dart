@@ -4,7 +4,7 @@ import '../../models/project.dart' as api;
 import '../../services/project_service.dart';
 import '../../utils/project_status.dart';
 
-const _adaiOrange = Color(0xFFB5651D);
+const _adaiOrange = Color(0xFFE57A44);
 
 final _projectService = ProjectService();
 
@@ -58,19 +58,17 @@ class _ProjetDetailScreenState extends State<ProjetDetailScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final colors = Theme.of(context).colorScheme;
     return Scaffold(
-      backgroundColor: Colors.white,
       appBar: AppBar(
-        backgroundColor: Colors.white,
         elevation: 0,
-        iconTheme: const IconThemeData(color: Colors.black87),
-        title: Text(
+        title: const Text(
           'Détails du projet',
-          style: const TextStyle(color: Colors.black, fontWeight: FontWeight.w700, fontSize: 16),
+          style: TextStyle(fontWeight: FontWeight.w700, fontSize: 16),
         ),
         actions: [
           IconButton(
-            icon: const Icon(Icons.more_vert, color: Colors.black87),
+            icon: const Icon(Icons.more_vert),
             onPressed: () {
               // TODO: afficher plus d'options
             },
@@ -90,7 +88,7 @@ class _ProjetDetailScreenState extends State<ProjetDetailScreen> {
                           Text(
                             _errorMessage!,
                             textAlign: TextAlign.center,
-                            style: TextStyle(color: Colors.grey.shade600),
+                            style: TextStyle(color: colors.onSurfaceVariant),
                           ),
                           const SizedBox(height: 12),
                           TextButton(
@@ -101,13 +99,14 @@ class _ProjetDetailScreenState extends State<ProjetDetailScreen> {
                       ),
                     ),
                   )
-                : _buildContent(_project!),
+                : _buildContent(context, _project!),
       ),
     );
   }
 
-  Widget _buildContent(api.Project project) {
-    final statusStyle = projectStatusStyle(project.status);
+  Widget _buildContent(BuildContext context, api.Project project) {
+    final colors = Theme.of(context).colorScheme;
+    final statusStyle = projectStatusStyle(context, project.status);
     final letter = project.name.isNotEmpty ? project.name[0].toUpperCase() : '?';
     final color = projectColorFor(project.id);
     final tasks = project.tasks;
@@ -118,7 +117,7 @@ class _ProjetDetailScreenState extends State<ProjetDetailScreen> {
         Container(
           padding: const EdgeInsets.all(16),
           decoration: BoxDecoration(
-            border: Border.all(color: Colors.grey.shade200),
+            border: Border.all(color: colors.outlineVariant),
             borderRadius: BorderRadius.circular(14),
           ),
           child: Row(
@@ -148,7 +147,7 @@ class _ProjetDetailScreenState extends State<ProjetDetailScreen> {
                         Expanded(
                           child: Text(
                             _title,
-                            style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w700, color: Colors.black),
+                            style: TextStyle(fontSize: 16, fontWeight: FontWeight.w700, color: colors.onSurface),
                           ),
                         ),
                         Container(
@@ -174,7 +173,7 @@ class _ProjetDetailScreenState extends State<ProjetDetailScreen> {
                         if (project.client != null) project.client!,
                         'Priorité ${projectPriorityLabel(project.priority)}',
                       ].join(' • '),
-                      style: TextStyle(color: Colors.grey.shade600, fontSize: 12.5, height: 1.3),
+                      style: TextStyle(color: colors.onSurfaceVariant, fontSize: 12.5, height: 1.3),
                     ),
                   ],
                 ),
@@ -187,9 +186,9 @@ class _ProjetDetailScreenState extends State<ProjetDetailScreen> {
         Row(
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
-            const Text(
+            Text(
               'Avancement du projet',
-              style: TextStyle(fontSize: 14, fontWeight: FontWeight.w700, color: Colors.black),
+              style: TextStyle(fontSize: 14, fontWeight: FontWeight.w700, color: colors.onSurface),
             ),
             Text(
               '${project.progress}%',
@@ -203,14 +202,14 @@ class _ProjetDetailScreenState extends State<ProjetDetailScreen> {
           child: LinearProgressIndicator(
             value: project.progress / 100,
             minHeight: 8,
-            backgroundColor: Colors.grey.shade100,
+            backgroundColor: colors.surfaceContainerHighest,
             valueColor: const AlwaysStoppedAnimation(projectProgressColor),
           ),
         ),
         const SizedBox(height: 6),
         Text(
           'Progression globale',
-          style: TextStyle(color: Colors.grey.shade500, fontSize: 12),
+          style: TextStyle(color: colors.onSurfaceVariant, fontSize: 12),
         ),
         const SizedBox(height: 20),
 
@@ -220,7 +219,7 @@ class _ProjetDetailScreenState extends State<ProjetDetailScreen> {
               child: _StatCard(
                 icon: Icons.timeline_outlined,
                 iconBg: const Color(0xFFE3F0FB),
-                iconColor: const Color(0xFF2E7CD6),
+                iconColor: const Color(0xFF0A84FF),
                 value: '${project.sprints.length}',
                 label: 'Sprints',
                 caption: 'Total sprints',
@@ -231,7 +230,7 @@ class _ProjetDetailScreenState extends State<ProjetDetailScreen> {
               child: _StatCard(
                 icon: Icons.check_circle_outline,
                 iconBg: const Color(0xFFE5F5E9),
-                iconColor: const Color(0xFF3A9B54),
+                iconColor: const Color(0xFF32D74B),
                 value: '${tasks?.total ?? 0}',
                 label: 'Tâches',
                 caption: tasks != null ? '${tasks.done} terminées' : 'Total tâches',
@@ -268,26 +267,26 @@ class _ProjetDetailScreenState extends State<ProjetDetailScreen> {
         ),
         const SizedBox(height: 24),
 
-        const Text(
+        Text(
           'Description',
-          style: TextStyle(fontSize: 16, fontWeight: FontWeight.w700, color: Colors.black),
+          style: TextStyle(fontSize: 16, fontWeight: FontWeight.w700, color: colors.onSurface),
         ),
         const SizedBox(height: 8),
         Text(
           (project.description == null || project.description!.isEmpty)
               ? 'Aucune description disponible.'
               : project.description!,
-          style: TextStyle(color: Colors.grey.shade700, fontSize: 13.5, height: 1.5),
+          style: TextStyle(color: colors.onSurfaceVariant, fontSize: 13.5, height: 1.5),
         ),
         const SizedBox(height: 24),
 
         Text(
           'Membres de l\'équipe (${project.members.length})',
-          style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w700, color: Colors.black),
+          style: TextStyle(fontSize: 16, fontWeight: FontWeight.w700, color: colors.onSurface),
         ),
         const SizedBox(height: 8),
         if (project.members.isEmpty)
-          Text('Aucun membre', style: TextStyle(color: Colors.grey.shade600))
+          Text('Aucun membre', style: TextStyle(color: colors.onSurfaceVariant))
         else
           SizedBox(
             height: 90,
@@ -306,11 +305,11 @@ class _ProjetDetailScreenState extends State<ProjetDetailScreen> {
                         const SizedBox(height: 6),
                         Text(
                           member.name,
-                          style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: Colors.black),
+                          style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: colors.onSurface),
                         ),
                         Text(
                           member.role ?? '',
-                          style: TextStyle(fontSize: 10.5, color: Colors.grey.shade500),
+                          style: TextStyle(fontSize: 10.5, color: colors.onSurfaceVariant),
                         ),
                       ],
                     ),
@@ -348,10 +347,11 @@ class _StatCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final colors = Theme.of(context).colorScheme;
     return Container(
       padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
-        border: Border.all(color: Colors.grey.shade200),
+        border: Border.all(color: colors.outlineVariant),
         borderRadius: BorderRadius.circular(14),
       ),
       child: Column(
@@ -369,16 +369,16 @@ class _StatCard extends StatelessWidget {
           const SizedBox(height: 10),
           Text(
             value,
-            style: TextStyle(fontSize: valueFontSize, fontWeight: FontWeight.w800, color: Colors.black),
+            style: TextStyle(fontSize: valueFontSize, fontWeight: FontWeight.w800, color: colors.onSurface),
           ),
           const SizedBox(height: 2),
           Text(
             label,
-            style: const TextStyle(fontSize: 12.5, fontWeight: FontWeight.w600, color: Colors.black87),
+            style: TextStyle(fontSize: 12.5, fontWeight: FontWeight.w600, color: colors.onSurface),
           ),
           Text(
             caption,
-            style: TextStyle(color: Colors.grey.shade500, fontSize: 11),
+            style: TextStyle(color: colors.onSurfaceVariant, fontSize: 11),
           ),
         ],
       ),

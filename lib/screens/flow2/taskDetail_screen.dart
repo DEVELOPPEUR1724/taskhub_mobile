@@ -4,8 +4,9 @@ import 'taskComment_screen.dart';
 import 'taskHistorique_screen.dart';
 import '../../services/task_service.dart';
 import '../../models/task.dart' as api;
+import '../../theme/app_colors.dart';
 
-const _adaiOrange = Color(0xFFB5651D);
+const _adaiOrange = Color(0xFFE57A44);
 
 class ChecklistItem {
   final String label;
@@ -70,7 +71,7 @@ class _TaskDetailScreenState extends State<TaskDetailScreen> {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text(e.toString().replaceFirst('Exception: ', '')),
-          backgroundColor: Colors.red,
+          backgroundColor: const Color(0xFFFF453A),
         ),
       );
     } finally {
@@ -88,27 +89,27 @@ class _TaskDetailScreenState extends State<TaskDetailScreen> {
 
   int get _doneCount => _checklist.where((item) => item.done).length;
 
-  ({String label, Color bg, Color fg}) get _statusStyle {
+  ({String label, AppStatusColor color}) get _statusInfo {
     switch (_task?.status) {
       case 'todo':
-        return (label: 'À faire', bg: const Color(0xFFE3F0FB), fg: const Color(0xFF2E7CD6));
+        return (label: 'À faire', color: AppStatusColor.info);
       case 'in_progress':
-        return (label: 'En cours', bg: const Color(0xFFE5F5E9), fg: const Color(0xFF3A9B54));
+        return (label: 'En cours', color: AppStatusColor.success);
       case 'blocked':
-        return (label: 'Bloqué', bg: const Color(0xFFFCE4E4), fg: const Color(0xFFE05B33));
+        return (label: 'Bloqué', color: AppStatusColor.danger);
       case 'to_test':
-        return (label: 'À tester', bg: const Color(0xFFFDF0DE), fg: _adaiOrange);
+        return (label: 'À tester', color: AppStatusColor.warning);
       case 'done':
-        return (label: 'Terminé', bg: Colors.grey.shade200, fg: Colors.grey.shade700);
+        return (label: 'Terminé', color: AppStatusColor.neutral);
       default:
-        return (label: _task?.status ?? '-', bg: Colors.grey.shade200, fg: Colors.grey.shade700);
+        return (label: _task?.status ?? '-', color: AppStatusColor.neutral);
     }
   }
 
   @override
   Widget build(BuildContext context) {
+    final colors = Theme.of(context).colorScheme;
     return Scaffold(
-      backgroundColor: Colors.white,
       body: SafeArea(
         child: Column(
           children: [
@@ -118,11 +119,11 @@ class _TaskDetailScreenState extends State<TaskDetailScreen> {
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
                   IconButton(
-                    icon: const Icon(Icons.arrow_back, color: Colors.black87),
+                    icon: Icon(Icons.arrow_back, color: colors.onSurface),
                     onPressed: () => Navigator.of(context).maybePop(),
                   ),
                   IconButton(
-                    icon: Icon(Icons.history, color: Colors.grey.shade700),
+                    icon: Icon(Icons.history, color: colors.onSurfaceVariant),
                     tooltip: 'Historique de suivi',
                     onPressed: () {
                       Navigator.of(context).push(
@@ -148,7 +149,7 @@ class _TaskDetailScreenState extends State<TaskDetailScreen> {
                         Text(
                           _errorMessage!,
                           textAlign: TextAlign.center,
-                          style: TextStyle(color: Colors.grey.shade600),
+                          style: TextStyle(color: colors.onSurfaceVariant),
                         ),
                         const SizedBox(height: 12),
                         TextButton(
@@ -169,10 +170,10 @@ class _TaskDetailScreenState extends State<TaskDetailScreen> {
                   children: [
                     Text(
                       _task!.title,
-                      style: const TextStyle(
+                      style: TextStyle(
                         fontSize: 20,
                         fontWeight: FontWeight.w700,
-                        color: Colors.black,
+                        color: colors.onSurface,
                         height: 1.3,
                       ),
                     ),
@@ -182,25 +183,25 @@ class _TaskDetailScreenState extends State<TaskDetailScreen> {
                         Container(
                           padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
                           decoration: BoxDecoration(
-                            color: _statusStyle.bg,
+                            color: statusColorFor(context, _statusInfo.color).bg,
                             borderRadius: BorderRadius.circular(20),
                           ),
                           child: Text(
-                            _statusStyle.label,
+                            _statusInfo.label,
                             style: TextStyle(
-                              color: _statusStyle.fg,
+                              color: statusColorFor(context, _statusInfo.color).fg,
                               fontSize: 12,
                               fontWeight: FontWeight.w600,
                             ),
                           ),
                         ),
                         const SizedBox(width: 10),
-                        const Icon(Icons.flag, size: 15, color: Colors.red),
+                        const Icon(Icons.flag, size: 15, color: Color(0xFFFF453A)),
                         const SizedBox(width: 4),
                         Text(
                           _task!.priority,
                           style: const TextStyle(
-                            color: Colors.red,
+                            color: Color(0xFFFF453A),
                             fontSize: 13,
                             fontWeight: FontWeight.w600,
                           ),
@@ -214,13 +215,13 @@ class _TaskDetailScreenState extends State<TaskDetailScreen> {
                           Icon(
                             _task!.trackingPaused == true ? Icons.pause_circle_outline : Icons.timer_outlined,
                             size: 15,
-                            color: Colors.grey.shade600,
+                            color: colors.onSurfaceVariant,
                           ),
                           const SizedBox(width: 6),
                           Text(
                             'Temps de suivi : ${_task!.trackingDuration}'
                             '${_task!.trackingPaused == true ? ' (en pause)' : ''}',
-                            style: TextStyle(color: Colors.grey.shade600, fontSize: 12.5),
+                            style: TextStyle(color: colors.onSurfaceVariant, fontSize: 12.5),
                           ),
                         ],
                       ),
@@ -230,7 +231,7 @@ class _TaskDetailScreenState extends State<TaskDetailScreen> {
                     Container(
                       padding: const EdgeInsets.symmetric(horizontal: 16),
                       decoration: BoxDecoration(
-                        border: Border.all(color: Colors.grey.shade300, width: 1),
+                        border: Border.all(color: colors.outlineVariant, width: 1),
                         borderRadius: BorderRadius.circular(12),
                       ),
                       child: Column(
@@ -239,13 +240,13 @@ class _TaskDetailScreenState extends State<TaskDetailScreen> {
                             label: 'Projet',
                             value: _task!.projectName ?? 'Projet #${_task!.projectId}',
                           ),
-                          Divider(height: 1, color: Colors.grey.shade100),
+                          Divider(height: 1, color: colors.outlineVariant),
                           _InfoRow(
                             label: 'Sprint',
                             value: _task!.sprintName ??
                                 (_task!.sprintId != null ? 'Sprint #${_task!.sprintId}' : 'Aucun'),
                           ),
-                          Divider(height: 1, color: Colors.grey.shade100),
+                          Divider(height: 1, color: colors.outlineVariant),
                           _InfoRow(
                             label: 'Deadline',
                             value: _task!.deadline != null
@@ -254,13 +255,13 @@ class _TaskDetailScreenState extends State<TaskDetailScreen> {
                                     '${_task!.deadline!.toLocal().year}'
                                 : 'Non définie',
                           ),
-                          Divider(height: 1, color: Colors.grey.shade100),
+                          Divider(height: 1, color: colors.outlineVariant),
                           _InfoRow(
                             label: 'Assigné à',
                             value: _task!.assignedToName ?? 'Utilisateur #${_task!.assignedToId}',
                           ),
                           if (_task!.createdByName != null) ...[
-                            Divider(height: 1, color: Colors.grey.shade100),
+                            Divider(height: 1, color: colors.outlineVariant),
                             _InfoRow(
                               label: 'Créée par',
                               value: _task!.createdByName!,
@@ -276,19 +277,19 @@ class _TaskDetailScreenState extends State<TaskDetailScreen> {
                       child: Row(
                         mainAxisAlignment: MainAxisAlignment.spaceBetween,
                         children: [
-                          const Text(
+                          Text(
                             'Description',
                             style: TextStyle(
                               fontSize: 16,
                               fontWeight: FontWeight.w700,
-                              color: Colors.black,
+                              color: colors.onSurface,
                             ),
                           ),
                           Icon(
                             _descriptionExpanded
                                 ? Icons.keyboard_arrow_up
                                 : Icons.keyboard_arrow_down,
-                            color: Colors.grey.shade600,
+                            color: colors.onSurfaceVariant,
                           ),
                         ],
                       ),
@@ -297,7 +298,7 @@ class _TaskDetailScreenState extends State<TaskDetailScreen> {
                       const SizedBox(height: 8),
                       Text(
                         _task!.description ?? 'Aucune description',
-                        style: TextStyle(color: Colors.grey.shade700, fontSize: 14, height: 1.4),
+                        style: TextStyle(color: colors.onSurfaceVariant, fontSize: 14, height: 1.4),
                       ),
                     ],
                     const SizedBox(height: 24),
@@ -305,17 +306,17 @@ class _TaskDetailScreenState extends State<TaskDetailScreen> {
                     Row(
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
-                        const Text(
+                        Text(
                           'Checklist',
                           style: TextStyle(
                             fontSize: 16,
                             fontWeight: FontWeight.w700,
-                            color: Colors.black,
+                            color: colors.onSurface,
                           ),
                         ),
                         Text(
                           '$_doneCount/${_checklist.length}',
-                          style: TextStyle(color: Colors.grey.shade600, fontSize: 13),
+                          style: TextStyle(color: colors.onSurfaceVariant, fontSize: 13),
                         ),
                       ],
                     ),
@@ -334,7 +335,7 @@ class _TaskDetailScreenState extends State<TaskDetailScreen> {
                           item.label,
                           style: TextStyle(
                             fontSize: 14,
-                            color: item.done ? Colors.grey.shade500 : Colors.black,
+                            color: item.done ? colors.onSurfaceVariant : colors.onSurface,
                           ),
                         ),
                       ),
@@ -367,12 +368,12 @@ class _TaskDetailScreenState extends State<TaskDetailScreen> {
                       },
                       style: OutlinedButton.styleFrom(
                         padding: EdgeInsets.zero,
-                        side: BorderSide(color: Colors.grey.shade300),
+                        side: BorderSide(color: colors.outlineVariant),
                         shape: RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(8),
                         ),
                       ),
-                      child: const Icon(Icons.more_horiz, color: Colors.black87),
+                      child: Icon(Icons.more_horiz, color: colors.onSurface),
                     ),
                   ),
                 ],
@@ -392,7 +393,7 @@ class _TaskDetailScreenState extends State<TaskDetailScreen> {
         primary = (
           label: 'Commencer',
           icon: Icons.play_arrow,
-          color: const Color(0xFF2E7CD6),
+          color: const Color(0xFF0A84FF),
           action: () => taskService.startTask(task.id),
         );
       case 'in_progress':
@@ -400,7 +401,7 @@ class _TaskDetailScreenState extends State<TaskDetailScreen> {
             ? (
                 label: 'Reprendre',
                 icon: Icons.play_arrow,
-                color: const Color(0xFF3A9B54),
+                color: const Color(0xFF32D74B),
                 action: () => taskService.resumeTask(task.id),
               )
             : (
@@ -419,7 +420,7 @@ class _TaskDetailScreenState extends State<TaskDetailScreen> {
         child: OutlinedButton(
           onPressed: null,
           style: OutlinedButton.styleFrom(
-            side: BorderSide(color: Colors.grey.shade300),
+            side: BorderSide(color: Theme.of(context).colorScheme.outlineVariant),
             shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
           ),
           child: const Text('Tâche terminée', style: TextStyle(fontWeight: FontWeight.w600)),
@@ -451,13 +452,13 @@ class _TaskDetailScreenState extends State<TaskDetailScreen> {
             height: 48,
             child: OutlinedButton.icon(
               onPressed: _isActionLoading ? null : () => _runAction(() => taskService.completeTask(task.id)),
-              icon: const Icon(Icons.check_circle_outline, size: 18, color: Color(0xFF3A9B54)),
+              icon: const Icon(Icons.check_circle_outline, size: 18, color: Color(0xFF32D74B)),
               label: const Text(
                 'Terminer',
-                style: TextStyle(color: Color(0xFF3A9B54), fontSize: 14, fontWeight: FontWeight.w600),
+                style: TextStyle(color: Color(0xFF32D74B), fontSize: 14, fontWeight: FontWeight.w600),
               ),
               style: OutlinedButton.styleFrom(
-                side: const BorderSide(color: Color(0xFF3A9B54)),
+                side: const BorderSide(color: Color(0xFF32D74B)),
                 shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
               ),
             ),
@@ -477,6 +478,7 @@ class _InfoRow extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final colors = Theme.of(context).colorScheme;
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 12),
       child: Row(
@@ -484,15 +486,15 @@ class _InfoRow extends StatelessWidget {
         children: [
           Text(
             label,
-            style: TextStyle(color: Colors.grey.shade700, fontSize: 14),
+            style: TextStyle(color: colors.onSurfaceVariant, fontSize: 14),
           ),
           valueWidget ??
               Text(
                 value ?? '',
-                style: const TextStyle(
+                style: TextStyle(
                   fontSize: 14,
                   fontWeight: FontWeight.w600,
-                  color: Colors.black,
+                  color: colors.onSurface,
                 ),
               ),
         ],

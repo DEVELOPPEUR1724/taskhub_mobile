@@ -24,7 +24,7 @@ class _ImageViewerScreenState extends State<ImageViewerScreen> {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text('Téléchargement impossible : $e'),
-          backgroundColor: Colors.red,
+          backgroundColor: const Color(0xFFFF453A),
         ),
       );
     } finally {

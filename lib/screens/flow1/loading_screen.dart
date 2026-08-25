@@ -5,7 +5,7 @@ import './error_screen.dart';
 
 
 
-const _adaiOrange = Color(0xFFB5651D);
+const _adaiOrange = Color(0xFFE57A44);
 const _adaiBrown = Color(0xFF3E2B1F);
 
 class LoadingScreen  extends StatefulWidget {
@@ -38,7 +38,6 @@ class _LoadingScreen  extends State<LoadingScreen > {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Colors.white,
       body: SafeArea(
         child: Center(
                     child: Column(
@@ -51,13 +50,13 @@ class _LoadingScreen  extends State<LoadingScreen > {
                     const SizedBox(height: 110),
               ),
               const SizedBox(height: 12),
-              const Text(
+              Text(
                 'ADAI',
                 style: TextStyle(
                   fontSize: 28,
                   fontWeight: FontWeight.bold,
                   letterSpacing: 4,
-                  color: _adaiBrown,
+                  color: Theme.of(context).brightness == Brightness.dark ? Colors.white : _adaiBrown,
                 ),
               ),
               const Text(
@@ -74,7 +73,7 @@ class _LoadingScreen  extends State<LoadingScreen > {
               const SizedBox(height: 16),
               Text(
                 'Vérification de votre session',
-                style: TextStyle(color: Colors.grey.shade500, fontSize: 12),
+                style: TextStyle(color: Theme.of(context).colorScheme.onSurfaceVariant, fontSize: 12),
               ),
             ],
           ),

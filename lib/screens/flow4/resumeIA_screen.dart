@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 
-const _adaiOrange = Color(0xFFB5651D);
+const _adaiOrange = Color(0xFFE57A44);
 
 class ResumeIAScreen extends StatefulWidget {
   const ResumeIAScreen({super.key});
@@ -34,20 +34,18 @@ class _ResumeIAScreenState extends State<ResumeIAScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final colors = Theme.of(context).colorScheme;
     return Scaffold(
-      backgroundColor: Colors.white,
       appBar: AppBar(
-        backgroundColor: Colors.white,
-        elevation: 0,
         iconTheme: const IconThemeData(color: _adaiOrange),
         centerTitle: true,
         title: const Text(
           'Résumé IA projet',
-          style: TextStyle(color: Colors.black, fontWeight: FontWeight.w700, fontSize: 16),
+          style: TextStyle(fontWeight: FontWeight.w700, fontSize: 16),
         ),
         actions: [
           IconButton(
-            icon: const Icon(Icons.more_vert, color: Colors.black87),
+            icon: const Icon(Icons.more_vert),
             onPressed: () {
               // TODO: afficher plus d'options
             },
@@ -63,7 +61,7 @@ class _ResumeIAScreenState extends State<ResumeIAScreen> {
               Container(
                 padding: const EdgeInsets.all(16),
                 decoration: BoxDecoration(
-                  border: Border.all(color: Colors.grey.shade200),
+                  border: Border.all(color: colors.outlineVariant),
                   borderRadius: BorderRadius.circular(16),
                 ),
                 child: Column(
@@ -74,7 +72,7 @@ class _ResumeIAScreenState extends State<ResumeIAScreen> {
                           width: 44,
                           height: 44,
                           decoration: BoxDecoration(
-                            color: const Color(0xFF3A9B54),
+                            color: const Color(0xFF32D74B),
                             borderRadius: BorderRadius.circular(12),
                           ),
                           child: const Icon(Icons.phone_iphone, color: Colors.white, size: 22),
@@ -86,16 +84,16 @@ class _ResumeIAScreenState extends State<ResumeIAScreen> {
                             children: [
                               Text(
                                 _projectName,
-                                style: const TextStyle(
+                                style: TextStyle(
                                   fontSize: 16,
                                   fontWeight: FontWeight.w700,
-                                  color: Colors.black,
+                                  color: colors.onSurface,
                                 ),
                               ),
                               const SizedBox(height: 2),
                               Text(
                                 _projectDescription,
-                                style: TextStyle(color: Colors.grey.shade600, fontSize: 12.5),
+                                style: TextStyle(color: colors.onSurfaceVariant, fontSize: 12.5),
                               ),
                             ],
                           ),
@@ -115,8 +113,8 @@ class _ResumeIAScreenState extends State<ResumeIAScreen> {
                             child: CircularProgressIndicator(
                               value: _progress,
                               strokeWidth: 10,
-                              backgroundColor: Colors.grey.shade200,
-                              valueColor: const AlwaysStoppedAnimation(Color(0xFF3A9B54)),
+                              backgroundColor: colors.surfaceContainerHighest,
+                              valueColor: const AlwaysStoppedAnimation(Color(0xFF32D74B)),
                             ),
                           ),
                           Column(
@@ -124,15 +122,15 @@ class _ResumeIAScreenState extends State<ResumeIAScreen> {
                             children: [
                               Text(
                                 '${(_progress * 100).round()}%',
-                                style: const TextStyle(
+                                style: TextStyle(
                                   fontSize: 24,
                                   fontWeight: FontWeight.w800,
-                                  color: Colors.black,
+                                  color: colors.onSurface,
                                 ),
                               ),
                               Text(
                                 'Avancement',
-                                style: TextStyle(color: Colors.grey.shade600, fontSize: 12),
+                                style: TextStyle(color: colors.onSurfaceVariant, fontSize: 12),
                               ),
                             ],
                           ),
@@ -187,7 +185,7 @@ class _ResumeIAScreenState extends State<ResumeIAScreen> {
                     child: _StatCard(
                       icon: Icons.format_list_bulleted,
                       iconBg: const Color(0xFFE3F0FB),
-                      iconColor: const Color(0xFF2E7CD6),
+                      iconColor: const Color(0xFF0A84FF),
                       value: '$_totalTasks',
                       label: 'Tâches totales',
                     ),
@@ -244,7 +242,7 @@ class _ResumeIAScreenState extends State<ResumeIAScreen> {
               Center(
                 child: Text(
                   'Dernière mise à jour : $_generatedAgo',
-                  style: TextStyle(color: Colors.grey.shade500, fontSize: 12),
+                  style: TextStyle(color: colors.onSurfaceVariant, fontSize: 12),
                 ),
               ),
             ],
@@ -272,10 +270,11 @@ class _StatCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final colors = Theme.of(context).colorScheme;
     return Container(
       padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 8),
       decoration: BoxDecoration(
-        border: Border.all(color: Colors.grey.shade200),
+        border: Border.all(color: colors.outlineVariant),
         borderRadius: BorderRadius.circular(12),
       ),
       child: Column(
@@ -292,13 +291,13 @@ class _StatCard extends StatelessWidget {
           const SizedBox(height: 8),
           Text(
             value,
-            style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w800, color: Colors.black),
+            style: TextStyle(fontSize: 18, fontWeight: FontWeight.w800, color: colors.onSurface),
           ),
           const SizedBox(height: 2),
           Text(
             label,
             textAlign: TextAlign.center,
-            style: TextStyle(color: Colors.grey.shade600, fontSize: 11),
+            style: TextStyle(color: colors.onSurfaceVariant, fontSize: 11),
           ),
         ],
       ),

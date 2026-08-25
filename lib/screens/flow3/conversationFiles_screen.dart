@@ -12,21 +12,18 @@ class ConversationFilesScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final colors = Theme.of(context).colorScheme;
     return Scaffold(
-      backgroundColor: Colors.white,
       appBar: AppBar(
-        backgroundColor: Colors.white,
-        elevation: 0,
-        iconTheme: const IconThemeData(color: Colors.black87),
         title: Text(
           'Fichiers partagés (${files.length})',
-          style: const TextStyle(color: Colors.black, fontWeight: FontWeight.w700, fontSize: 16),
+          style: const TextStyle(fontWeight: FontWeight.w700, fontSize: 16),
         ),
       ),
       body: SafeArea(
         child: files.isEmpty
             ? Center(
-                child: Text('Aucun fichier partagé', style: TextStyle(color: Colors.grey.shade600)),
+                child: Text('Aucun fichier partagé', style: TextStyle(color: colors.onSurfaceVariant)),
               )
             : GridView.builder(
                 padding: const EdgeInsets.all(12),
@@ -47,20 +44,20 @@ class ConversationFilesScreen extends StatelessWidget {
                       onTap: () => launchUrl(Uri.parse(fileUrl), mode: LaunchMode.externalApplication),
                       child: Container(
                         decoration: BoxDecoration(
-                          color: const Color(0xFFF5F5F5),
+                          color: colors.surfaceContainerHighest,
                           borderRadius: BorderRadius.circular(8),
                         ),
                         padding: const EdgeInsets.all(8),
                         child: Column(
                           mainAxisAlignment: MainAxisAlignment.center,
                           children: [
-                            Icon(fileIconForExtension(file.fileExtension), size: 26, color: Colors.grey.shade600),
+                            Icon(fileIconForExtension(file.fileExtension), size: 26, color: colors.onSurfaceVariant),
                             const SizedBox(height: 6),
                             Text(
                               file.fileName ?? file.fileExtension.toUpperCase(),
                               maxLines: 1,
                               overflow: TextOverflow.ellipsis,
-                              style: TextStyle(fontSize: 10.5, color: Colors.grey.shade600),
+                              style: TextStyle(fontSize: 10.5, color: colors.onSurfaceVariant),
                             ),
                           ],
                         ),
@@ -83,9 +80,9 @@ class ConversationFilesScreen extends StatelessWidget {
                         fileUrl,
                         fit: BoxFit.cover,
                         errorBuilder: (context, error, stackTrace) => Container(
-                          color: Colors.grey.shade200,
+                          color: colors.surfaceContainerHighest,
                           alignment: Alignment.center,
-                          child: Icon(Icons.broken_image_outlined, color: Colors.grey.shade400),
+                          child: Icon(Icons.broken_image_outlined, color: colors.onSurfaceVariant),
                         ),
                       ),
                     ),

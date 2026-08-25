@@ -3,10 +3,11 @@ import 'package:flutter/material.dart';
 import '../flow2/taskDetail_screen.dart';
 import '../../models/app_notification.dart';
 import '../../services/notification_service.dart';
+import '../../theme/app_colors.dart';
 
 final _notificationService = NotificationService();
 
-const _adaiOrange = Color(0xFFB5651D);
+const _adaiOrange = Color(0xFFE57A44);
 
 enum NotificationFilter { toutes, nonLues }
 
@@ -71,7 +72,7 @@ class _NotificationListeScreenState extends State<NotificationListeScreen> {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text(e.toString().replaceFirst('Exception: ', '')),
-          backgroundColor: Colors.red,
+          backgroundColor: const Color(0xFFFF453A),
         ),
       );
     }
@@ -108,7 +109,7 @@ class _NotificationListeScreenState extends State<NotificationListeScreen> {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text(e.toString().replaceFirst('Exception: ', '')),
-          backgroundColor: Colors.red,
+          backgroundColor: const Color(0xFFFF453A),
         ),
       );
     }
@@ -116,8 +117,9 @@ class _NotificationListeScreenState extends State<NotificationListeScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final colors = Theme.of(context).colorScheme;
     return Material(
-      color: Colors.white,
+      color: colors.surface,
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -129,15 +131,15 @@ class _NotificationListeScreenState extends State<NotificationListeScreen> {
                 Row(
                   children: [
                     IconButton(
-                      icon: const Icon(Icons.arrow_back, color: Colors.black87),
+                      icon: Icon(Icons.arrow_back, color: colors.onSurface),
                       onPressed: () => Navigator.of(context).maybePop(),
                     ),
-                    const Text(
+                    Text(
                       'Notifications',
                       style: TextStyle(
                         fontSize: 24,
                         fontWeight: FontWeight.bold,
-                        color: Colors.black,
+                        color: colors.onSurface,
                       ),
                     ),
                   ],
@@ -185,7 +187,7 @@ class _NotificationListeScreenState extends State<NotificationListeScreen> {
                               Text(
                                 _errorMessage!,
                                 textAlign: TextAlign.center,
-                                style: TextStyle(color: Colors.grey.shade600),
+                                style: TextStyle(color: colors.onSurfaceVariant),
                               ),
                               const SizedBox(height: 12),
                               TextButton(
@@ -200,7 +202,7 @@ class _NotificationListeScreenState extends State<NotificationListeScreen> {
                         ? Center(
                             child: Text(
                               'Aucune notification',
-                              style: TextStyle(color: Colors.grey.shade600),
+                              style: TextStyle(color: colors.onSurfaceVariant),
                             ),
                           )
                         : ListView.builder(
@@ -248,6 +250,7 @@ class _FilterChip extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final colors = Theme.of(context).colorScheme;
     return Padding(
       padding: const EdgeInsets.only(right: 8),
       child: ChoiceChip(
@@ -256,40 +259,60 @@ class _FilterChip extends StatelessWidget {
         onSelected: (_) => onTap(),
         showCheckmark: false,
         selectedColor: _adaiOrange,
-        backgroundColor: Colors.white,
+        backgroundColor: colors.surface,
         labelStyle: TextStyle(
-          color: selected ? Colors.white : Colors.grey.shade700,
+          color: selected ? Colors.white : colors.onSurfaceVariant,
           fontWeight: FontWeight.w600,
         ),
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(20),
-          side: BorderSide(color: selected ? _adaiOrange : Colors.grey.shade300),
+          side: BorderSide(color: selected ? _adaiOrange : colors.outlineVariant),
         ),
       ),
     );
   }
 }
 
-({IconData icon, Color bg, Color fg}) _iconStyleForType(String? type) {
+IconData _iconForType(String? type) {
   switch (type) {
     case 'task':
-      return (icon: Icons.assignment_outlined, bg: const Color(0xFFE3F0FB), fg: const Color(0xFF2E7CD6));
+      return Icons.assignment_outlined;
     case 'deadline':
-      return (icon: Icons.flag_outlined, bg: const Color(0xFFFCE4E4), fg: const Color(0xFFE05B33));
+      return Icons.flag_outlined;
     case 'task_validation':
-      return (icon: Icons.verified_outlined, bg: const Color(0xFFF1E7FB), fg: const Color(0xFF8B5CF6));
+      return Icons.verified_outlined;
     case 'budget_request':
-      return (icon: Icons.payments_outlined, bg: const Color(0xFFE5F5E9), fg: const Color(0xFF3A9B54));
+      return Icons.payments_outlined;
     case 'calendar_event':
-      return (icon: Icons.event_outlined, bg: const Color(0xFFE3F0FB), fg: const Color(0xFF2E7CD6));
+      return Icons.event_outlined;
     case 'project':
-      return (icon: Icons.folder_outlined, bg: const Color(0xFFFDF0DE), fg: _adaiOrange);
+      return Icons.folder_outlined;
     case 'sprint':
-      return (icon: Icons.timeline_outlined, bg: const Color(0xFFFDF0DE), fg: _adaiOrange);
+      return Icons.timeline_outlined;
     case 'time_tracking':
-      return (icon: Icons.access_time, bg: const Color(0xFFE5F5E9), fg: const Color(0xFF3A9B54));
+      return Icons.access_time;
     default:
-      return (icon: Icons.notifications_outlined, bg: Colors.grey.shade200, fg: Colors.grey.shade600);
+      return Icons.notifications_outlined;
+  }
+}
+
+AppStatusColor _statusColorForType(String? type) {
+  switch (type) {
+    case 'task':
+    case 'calendar_event':
+      return AppStatusColor.info;
+    case 'deadline':
+      return AppStatusColor.danger;
+    case 'task_validation':
+      return AppStatusColor.purple;
+    case 'budget_request':
+    case 'time_tracking':
+      return AppStatusColor.success;
+    case 'project':
+    case 'sprint':
+      return AppStatusColor.warning;
+    default:
+      return AppStatusColor.neutral;
   }
 }
 
@@ -315,7 +338,8 @@ class _NotificationTile extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final style = _iconStyleForType(notification.type);
+    final colors = Theme.of(context).colorScheme;
+    final status = statusColorFor(context, _statusColorForType(notification.type));
     return GestureDetector(
       onTap: onMarkRead,
       child: Container(
@@ -328,10 +352,10 @@ class _NotificationTile extends StatelessWidget {
               width: 40,
               height: 40,
               decoration: BoxDecoration(
-                color: style.bg,
+                color: status.bg,
                 shape: BoxShape.circle,
               ),
-              child: Icon(style.icon, color: style.fg, size: 20),
+              child: Icon(_iconForType(notification.type), color: status.fg, size: 20),
             ),
             const SizedBox(width: 12),
             Expanded(
@@ -340,16 +364,16 @@ class _NotificationTile extends StatelessWidget {
                 children: [
                   Text(
                     notification.title ?? 'Notification',
-                    style: const TextStyle(
+                    style: TextStyle(
                       fontSize: 14,
                       fontWeight: FontWeight.w700,
-                      color: Colors.black,
+                      color: colors.onSurface,
                     ),
                   ),
                   const SizedBox(height: 4),
                   Text(
                     notification.message ?? '',
-                    style: TextStyle(color: Colors.grey.shade600, fontSize: 13, height: 1.3),
+                    style: TextStyle(color: colors.onSurfaceVariant, fontSize: 13, height: 1.3),
                   ),
                 ],
               ),
@@ -360,14 +384,14 @@ class _NotificationTile extends StatelessWidget {
               children: [
                 Text(
                   _formatRelativeTime(notification.createdAt),
-                  style: TextStyle(color: Colors.grey.shade500, fontSize: 12),
+                  style: TextStyle(color: colors.onSurfaceVariant, fontSize: 12),
                 ),
                 if (!notification.isRead) ...[
                   const SizedBox(height: 8),
                   Container(
                     padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 5),
                     decoration: BoxDecoration(
-                      color: Colors.grey.shade200,
+                      color: colors.surfaceContainerHighest,
                       borderRadius: BorderRadius.circular(6),
                     ),
                     child: Row(
@@ -377,7 +401,7 @@ class _NotificationTile extends StatelessWidget {
                           width: 12,
                           height: 12,
                           decoration: BoxDecoration(
-                            color: Colors.grey.shade400,
+                            color: colors.onSurfaceVariant,
                             shape: BoxShape.circle,
                           ),
                           child: const Icon(Icons.check, size: 9, color: Colors.white),
@@ -387,7 +411,7 @@ class _NotificationTile extends StatelessWidget {
                           'Marquer comme lu',
                           style: TextStyle(
                             fontSize: 10.5,
-                            color: Colors.grey.shade700,
+                            color: colors.onSurfaceVariant,
                             fontWeight: FontWeight.w600,
                           ),
                         ),

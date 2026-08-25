@@ -7,8 +7,8 @@ import '../../utils/french_date.dart';
 
 final _pointageService = PointageService();
 
-const _adaiOrange = Color(0xFFB5651D);
-const _adaiGreen = Color(0xFF3A9B54);
+const _adaiOrange = Color(0xFFE57A44);
+const _adaiGreen = Color(0xFF32D74B);
 const _adaiGrey = Color(0xFF9E9E9E);
 
 class TimelineStep {
@@ -75,7 +75,7 @@ class _PointageScreenState extends State<PointageScreen> {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text(e.toString().replaceFirst('Exception: ', '')),
-          backgroundColor: Colors.red,
+          backgroundColor: const Color(0xFFFF453A),
         ),
       );
     } finally {
@@ -130,8 +130,9 @@ class _PointageScreenState extends State<PointageScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final colors = Theme.of(context).colorScheme;
     return Material(
-      color: Colors.white,
+      color: colors.surface,
       child: _isLoading
           ? const Center(child: CircularProgressIndicator())
           : _errorMessage != null
@@ -141,18 +142,19 @@ class _PointageScreenState extends State<PointageScreen> {
                     child: Column(
                       mainAxisSize: MainAxisSize.min,
                       children: [
-                        Text(_errorMessage!, textAlign: TextAlign.center, style: TextStyle(color: Colors.grey.shade600)),
+                        Text(_errorMessage!, textAlign: TextAlign.center, style: TextStyle(color: colors.onSurfaceVariant)),
                         const SizedBox(height: 12),
                         TextButton(onPressed: _loadToday, child: const Text('Réessayer')),
                       ],
                     ),
                   ),
                 )
-              : _buildContent(),
+              : _buildContent(context),
     );
   }
 
-  Widget _buildContent() {
+  Widget _buildContent(BuildContext context) {
+    final colors = Theme.of(context).colorScheme;
     final w = _workday!;
     final status = _statusStyle;
 
@@ -171,14 +173,14 @@ class _PointageScreenState extends State<PointageScreen> {
                 ),
                 backgroundColor: Colors.transparent,
               ),
-              const Text(
+              Text(
                 'Mon Pointage',
-                style: TextStyle(fontSize: 17, fontWeight: FontWeight.w700, color: Colors.black),
+                style: TextStyle(fontSize: 17, fontWeight: FontWeight.w700, color: colors.onSurface),
               ),
               Row(
                 children: [
                   IconButton(
-                    icon: Icon(Icons.history, color: Colors.grey.shade700),
+                    icon: Icon(Icons.history, color: colors.onSurfaceVariant),
                     tooltip: 'Historique des pointages',
                     onPressed: () {
                       Navigator.of(context).push(
@@ -186,7 +188,7 @@ class _PointageScreenState extends State<PointageScreen> {
                       );
                     },
                   ),
-                  Icon(Icons.notifications_none, color: Colors.grey.shade700),
+                  Icon(Icons.notifications_none, color: colors.onSurfaceVariant),
                 ],
               ),
             ],
@@ -196,9 +198,9 @@ class _PointageScreenState extends State<PointageScreen> {
             child: Row(
               mainAxisSize: MainAxisSize.min,
               children: [
-                Icon(Icons.calendar_today_outlined, size: 14, color: Colors.grey.shade500),
+                Icon(Icons.calendar_today_outlined, size: 14, color: colors.onSurfaceVariant),
                 const SizedBox(width: 6),
-                Text(formatFrenchDate(DateTime.now()), style: TextStyle(color: Colors.grey.shade600, fontSize: 13)),
+                Text(formatFrenchDate(DateTime.now()), style: TextStyle(color: colors.onSurfaceVariant, fontSize: 13)),
               ],
             ),
           ),
@@ -208,14 +210,14 @@ class _PointageScreenState extends State<PointageScreen> {
             width: double.infinity,
             padding: const EdgeInsets.symmetric(vertical: 20, horizontal: 16),
             decoration: BoxDecoration(
-              border: Border.all(color: Colors.grey.shade200),
+              border: Border.all(color: colors.outlineVariant),
               borderRadius: BorderRadius.circular(16),
             ),
             child: Column(
               children: [
                 Text(
                   'STATUT DE LA JOURNÉE',
-                  style: TextStyle(color: Colors.grey.shade500, fontSize: 11, fontWeight: FontWeight.w600, letterSpacing: 0.5),
+                  style: TextStyle(color: colors.onSurfaceVariant, fontSize: 11, fontWeight: FontWeight.w600, letterSpacing: 0.5),
                 ),
                 const SizedBox(height: 10),
                 Container(
@@ -239,20 +241,20 @@ class _PointageScreenState extends State<PointageScreen> {
                     Expanded(
                       child: Column(
                         children: [
-                          Text('Début de journée', style: TextStyle(color: Colors.grey.shade600, fontSize: 12.5)),
+                          Text('Début de journée', style: TextStyle(color: colors.onSurfaceVariant, fontSize: 12.5)),
                           const SizedBox(height: 6),
                           Text(
                             _formatTime(w.startedAt),
-                            style: const TextStyle(fontSize: 20, fontWeight: FontWeight.w700, color: Colors.black),
+                            style: TextStyle(fontSize: 20, fontWeight: FontWeight.w700, color: colors.onSurface),
                           ),
                         ],
                       ),
                     ),
-                    SizedBox(height: 42, child: VerticalDivider(color: Colors.grey.shade200, width: 1)),
+                    SizedBox(height: 42, child: VerticalDivider(color: colors.outlineVariant, width: 1)),
                     Expanded(
                       child: Column(
                         children: [
-                          Text('Temps effectif', style: TextStyle(color: Colors.grey.shade600, fontSize: 12.5)),
+                          Text('Temps effectif', style: TextStyle(color: colors.onSurfaceVariant, fontSize: 12.5)),
                           const SizedBox(height: 6),
                           Text(
                             w.durationLabel ?? '00h00',
@@ -268,11 +270,11 @@ class _PointageScreenState extends State<PointageScreen> {
                   Row(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
-                      Icon(Icons.pause_circle_outline, size: 15, color: Colors.grey.shade500),
+                      Icon(Icons.pause_circle_outline, size: 15, color: colors.onSurfaceVariant),
                       const SizedBox(width: 6),
                       Text(
                         '${w.pauseDuration ?? '00h00'} en pause',
-                        style: TextStyle(color: Colors.grey.shade600, fontSize: 12.5),
+                        style: TextStyle(color: colors.onSurfaceVariant, fontSize: 12.5),
                       ),
                     ],
                   ),
@@ -284,7 +286,7 @@ class _PointageScreenState extends State<PointageScreen> {
 
           Text(
             'ACTION DISPONIBLE',
-            style: TextStyle(color: Colors.grey.shade500, fontSize: 11, fontWeight: FontWeight.w600, letterSpacing: 0.5),
+            style: TextStyle(color: colors.onSurfaceVariant, fontSize: 11, fontWeight: FontWeight.w600, letterSpacing: 0.5),
           ),
           const SizedBox(height: 12),
           ..._buildActions(w.status),
@@ -293,7 +295,7 @@ class _PointageScreenState extends State<PointageScreen> {
           if (_timeline.isNotEmpty) ...[
             Text(
               'TIMELINE DU JOUR',
-              style: TextStyle(color: Colors.grey.shade500, fontSize: 11, fontWeight: FontWeight.w600, letterSpacing: 0.5),
+              style: TextStyle(color: colors.onSurfaceVariant, fontSize: 11, fontWeight: FontWeight.w600, letterSpacing: 0.5),
             ),
             const SizedBox(height: 16),
             _Timeline(steps: _timeline),
@@ -326,7 +328,7 @@ class _PointageScreenState extends State<PointageScreen> {
           _ActionButton(
             label: 'TERMINER MA JOURNÉE',
             icon: Icons.stop_circle_outlined,
-            color: Colors.red,
+            color: const Color(0xFFFF453A),
             onPressed: _isActionLoading ? null : () => _runAction(_pointageService.endWorkday),
           ),
         ];
@@ -342,14 +344,17 @@ class _PointageScreenState extends State<PointageScreen> {
           _ActionButton(
             label: 'TERMINER MA JOURNÉE',
             icon: Icons.stop_circle_outlined,
-            color: Colors.red,
+            color: const Color(0xFFFF453A),
             onPressed: _isActionLoading ? null : () => _runAction(_pointageService.endWorkday),
           ),
         ];
       default:
         return [
           Center(
-            child: Text('Journée déjà terminée pour aujourd\'hui.', style: TextStyle(color: Colors.grey.shade600)),
+            child: Text(
+              'Journée déjà terminée pour aujourd\'hui.',
+              style: TextStyle(color: Theme.of(context).colorScheme.onSurfaceVariant),
+            ),
           ),
         ];
     }
@@ -394,6 +399,7 @@ class _Timeline extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final colors = Theme.of(context).colorScheme;
     return Row(
       children: [
         for (int i = 0; i < steps.length; i++) ...[
@@ -407,7 +413,7 @@ class _Timeline extends StatelessWidget {
                           ? const SizedBox()
                           : Container(
                               height: 2,
-                              color: steps[i - 1].isDone ? _stepColor(steps[i - 1]) : Colors.grey.shade300,
+                              color: steps[i - 1].isDone ? _stepColor(steps[i - 1]) : colors.outlineVariant,
                             ),
                     ),
                     _StepDot(step: steps[i]),
@@ -416,15 +422,15 @@ class _Timeline extends StatelessWidget {
                           ? const SizedBox()
                           : Container(
                               height: 2,
-                              color: steps[i].isDone ? _stepColor(steps[i]) : Colors.grey.shade300,
+                              color: steps[i].isDone ? _stepColor(steps[i]) : colors.outlineVariant,
                             ),
                     ),
                   ],
                 ),
                 const SizedBox(height: 8),
-                Text(steps[i].time, style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w700, color: Colors.black)),
+                Text(steps[i].time, style: TextStyle(fontSize: 12, fontWeight: FontWeight.w700, color: colors.onSurface)),
                 const SizedBox(height: 2),
-                Text(steps[i].label, style: TextStyle(fontSize: 11, color: Colors.grey.shade500)),
+                Text(steps[i].label, style: TextStyle(fontSize: 11, color: colors.onSurfaceVariant)),
               ],
             ),
           ),
@@ -443,11 +449,12 @@ class _StepDot extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final colors = Theme.of(context).colorScheme;
     if (!step.isDone) {
       return Container(
         width: 16,
         height: 16,
-        decoration: BoxDecoration(shape: BoxShape.circle, border: Border.all(color: Colors.grey.shade300, width: 2)),
+        decoration: BoxDecoration(shape: BoxShape.circle, border: Border.all(color: colors.outlineVariant, width: 2)),
       );
     }
     final color = step.isActive ? _adaiOrange : _adaiGreen;
@@ -456,7 +463,7 @@ class _StepDot extends StatelessWidget {
       height: 16,
       decoration: BoxDecoration(
         shape: BoxShape.circle,
-        color: step.isActive ? Colors.white : color,
+        color: step.isActive ? colors.surface : color,
         border: Border.all(color: color, width: 2),
       ),
     );

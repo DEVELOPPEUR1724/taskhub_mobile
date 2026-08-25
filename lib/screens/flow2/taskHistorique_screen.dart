@@ -3,7 +3,7 @@ import 'package:flutter/material.dart';
 import '../../models/task.dart';
 import '../../services/task_service.dart';
 
-const _adaiOrange = Color(0xFFB5651D);
+const _adaiOrange = Color(0xFFE57A44);
 
 final _taskService = TaskService();
 
@@ -57,15 +57,12 @@ class _TaskHistoriqueScreenState extends State<TaskHistoriqueScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final colors = Theme.of(context).colorScheme;
     return Scaffold(
-      backgroundColor: Colors.white,
       appBar: AppBar(
-        backgroundColor: Colors.white,
-        elevation: 0,
-        iconTheme: const IconThemeData(color: Colors.black87),
         title: const Text(
           'Historique de suivi',
-          style: TextStyle(color: Colors.black, fontWeight: FontWeight.w700, fontSize: 16),
+          style: TextStyle(fontWeight: FontWeight.w700, fontSize: 16),
         ),
       ),
       body: SafeArea(
@@ -81,7 +78,7 @@ class _TaskHistoriqueScreenState extends State<TaskHistoriqueScreen> {
                           Text(
                             _errorMessage!,
                             textAlign: TextAlign.center,
-                            style: TextStyle(color: Colors.grey.shade600),
+                            style: TextStyle(color: colors.onSurfaceVariant),
                           ),
                           const SizedBox(height: 12),
                           TextButton(onPressed: _loadHistory, child: const Text('Réessayer')),
@@ -95,13 +92,14 @@ class _TaskHistoriqueScreenState extends State<TaskHistoriqueScreen> {
   }
 
   Widget _buildContent(TaskHistory history) {
+    final colors = Theme.of(context).colorScheme;
     return ListView(
       padding: const EdgeInsets.all(20),
       children: [
         Container(
           padding: const EdgeInsets.all(16),
           decoration: BoxDecoration(
-            border: Border.all(color: Colors.grey.shade200),
+            border: Border.all(color: colors.outlineVariant),
             borderRadius: BorderRadius.circular(14),
           ),
           child: Row(
@@ -110,7 +108,7 @@ class _TaskHistoriqueScreenState extends State<TaskHistoriqueScreen> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text('Temps total', style: TextStyle(color: Colors.grey.shade600, fontSize: 12.5)),
+                    Text('Temps total', style: TextStyle(color: colors.onSurfaceVariant, fontSize: 12.5)),
                     const SizedBox(height: 4),
                     Text(
                       history.trackingDuration ?? '--',
@@ -137,11 +135,11 @@ class _TaskHistoriqueScreenState extends State<TaskHistoriqueScreen> {
         const SizedBox(height: 24),
         Text(
           'Sessions (${history.sessions.length})',
-          style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w700, color: Colors.black),
+          style: TextStyle(fontSize: 16, fontWeight: FontWeight.w700, color: colors.onSurface),
         ),
         const SizedBox(height: 12),
         if (history.sessions.isEmpty)
-          Text('Aucune session enregistrée', style: TextStyle(color: Colors.grey.shade600))
+          Text('Aucune session enregistrée', style: TextStyle(color: colors.onSurfaceVariant))
         else
           for (final session in history.sessions) _SessionTile(session: session, formatDateTime: _formatDateTime),
       ],
@@ -157,12 +155,13 @@ class _SessionTile extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final colors = Theme.of(context).colorScheme;
     final isOngoing = session.endedAt == null;
     return Container(
       margin: const EdgeInsets.only(bottom: 10),
       padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
-        border: Border.all(color: Colors.grey.shade200),
+        border: Border.all(color: colors.outlineVariant),
         borderRadius: BorderRadius.circular(12),
       ),
       child: Row(
@@ -177,7 +176,7 @@ class _SessionTile extends StatelessWidget {
             child: Icon(
               isOngoing ? Icons.timelapse : Icons.check,
               size: 18,
-              color: isOngoing ? _adaiOrange : const Color(0xFF3A9B54),
+              color: isOngoing ? _adaiOrange : const Color(0xFF32D74B),
             ),
           ),
           const SizedBox(width: 12),
@@ -187,14 +186,14 @@ class _SessionTile extends StatelessWidget {
               children: [
                 Text(
                   '${formatDateTime(session.startedAt)} → ${isOngoing ? 'en cours' : formatDateTime(session.endedAt)}',
-                  style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w600, color: Colors.black87),
+                  style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600, color: colors.onSurface),
                 ),
               ],
             ),
           ),
           Text(
             session.duration,
-            style: TextStyle(color: Colors.grey.shade600, fontSize: 12.5, fontWeight: FontWeight.w600),
+            style: TextStyle(color: colors.onSurfaceVariant, fontSize: 12.5, fontWeight: FontWeight.w600),
           ),
         ],
       ),

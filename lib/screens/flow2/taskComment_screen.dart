@@ -8,7 +8,7 @@ import '../../models/comment.dart' as api;
 
 final commentService = CommentService();
 
-const _adaiOrange = Color(0xFFB5651D);
+const _adaiOrange = Color(0xFFE57A44);
 class Comment {
   final String author;
   final String avatarUrl;
@@ -119,7 +119,7 @@ class _TaskCommentScreenState extends State<TaskCommentScreen> {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text(e.toString().replaceFirst('Exception: ', '')),
-          backgroundColor: Colors.red,
+          backgroundColor: const Color(0xFFFF453A),
         ),
       );
       // Le texte est volontairement conservé dans le champ en cas d'échec,
@@ -144,7 +144,7 @@ class _TaskCommentScreenState extends State<TaskCommentScreen> {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text(e.toString().replaceFirst('Exception: ', '')),
-          backgroundColor: Colors.red,
+          backgroundColor: const Color(0xFFFF453A),
         ),
       );
     }
@@ -153,16 +153,10 @@ class _TaskCommentScreenState extends State<TaskCommentScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final colors = Theme.of(context).colorScheme;
     return Scaffold(
-      backgroundColor: Colors.white,
       appBar: AppBar(
-        backgroundColor: Colors.white,
-        elevation: 0,
-        foregroundColor: Colors.black87,
-        title: const Text(
-          'Commentaires',
-          style: TextStyle(color: Colors.black87, fontWeight: FontWeight.w700),
-        ),
+        title: const Text('Commentaires', style: TextStyle(fontWeight: FontWeight.w700)),
       ),
       body: SafeArea(
         child: Column(
@@ -182,7 +176,7 @@ class _TaskCommentScreenState extends State<TaskCommentScreen> {
                                 Text(
                                   _errorMessage!,
                                   textAlign: TextAlign.center,
-                                  style: TextStyle(color: Colors.grey.shade600),
+                                  style: TextStyle(color: colors.onSurfaceVariant),
                                 ),
                                 const SizedBox(height: 12),
                                 TextButton(
@@ -219,6 +213,7 @@ class _CommentBubble extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final colors = Theme.of(context).colorScheme;
     return Padding(
       padding: const EdgeInsets.only(bottom: 16),
       child: Row(
@@ -226,7 +221,7 @@ class _CommentBubble extends StatelessWidget {
         children: [
           CircleAvatar(
             radius: 18,
-            backgroundColor: const Color(0xFFF5F5F5),
+            backgroundColor: colors.surfaceContainerHighest,
             backgroundImage: NetworkImage(comment.avatarUrl),
             // Correction : évite l'exception plein écran (ImageCodecException /
             // ProgressEvent) quand l'avatar externe (pravatar.cc) est
@@ -238,7 +233,7 @@ class _CommentBubble extends StatelessWidget {
             child: Container(
               padding: const EdgeInsets.all(12),
               decoration: BoxDecoration(
-                color: const Color(0xFFF5F5F5),
+                color: colors.surfaceContainerHighest,
                 borderRadius: BorderRadius.circular(12),
               ),
               child: Column(
@@ -249,22 +244,22 @@ class _CommentBubble extends StatelessWidget {
                     children: [
                       Text(
                         comment.author,
-                        style: const TextStyle(
+                        style: TextStyle(
                           fontWeight: FontWeight.w700,
                           fontSize: 14,
-                          color: Colors.black,
+                          color: colors.onSurface,
                         ),
                       ),
                       Text(
                         comment.timestamp,
-                        style: TextStyle(color: Colors.grey.shade500, fontSize: 11),
+                        style: TextStyle(color: colors.onSurfaceVariant, fontSize: 11),
                       ),
                     ],
                   ),
                   const SizedBox(height: 6),
                   Text(
                     comment.message,
-                    style: const TextStyle(fontSize: 13.5, color: Colors.black87, height: 1.4),
+                    style: TextStyle(fontSize: 13.5, color: colors.onSurface, height: 1.4),
                   ),
                   if (comment.imageUrl != null) ...[
                     const SizedBox(height: 10),
@@ -290,9 +285,9 @@ class _CommentBubble extends StatelessWidget {
                           errorBuilder: (context, error, stackTrace) => Container(
                             height: 130,
                             width: double.infinity,
-                            color: Colors.grey.shade200,
+                            color: colors.surfaceContainerHighest,
                             alignment: Alignment.center,
-                            child: Icon(Icons.broken_image_outlined, color: Colors.grey.shade400),
+                            child: Icon(Icons.broken_image_outlined, color: colors.onSurfaceVariant),
                           ),
                         ),
                       ),
@@ -306,7 +301,7 @@ class _CommentBubble extends StatelessWidget {
                         const SizedBox(width: 4),
                         Text(
                           '${comment.likeCount}',
-                          style: TextStyle(color: Colors.grey.shade600, fontSize: 12),
+                          style: TextStyle(color: colors.onSurfaceVariant, fontSize: 12),
                         ),
                       ],
                     ),
@@ -334,6 +329,7 @@ class _CommentInputBar extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final colors = Theme.of(context).colorScheme;
     return Padding(
       padding: const EdgeInsets.fromLTRB(16, 8, 16, 16),
       child: Row(
@@ -342,9 +338,9 @@ class _CommentInputBar extends StatelessWidget {
             child: Container(
               padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
               decoration: BoxDecoration(
-                color: Colors.white,
+                color: colors.surface,
                 borderRadius: BorderRadius.circular(24),
-                border: Border.all(color: Colors.grey.shade300),
+                border: Border.all(color: colors.outlineVariant),
               ),
               child: Row(
                 children: [
@@ -372,7 +368,7 @@ class _CommentInputBar extends StatelessWidget {
                         );
                       }
                     },
-                    child: Icon(Icons.attach_file, color: Colors.grey.shade500, size: 20),
+                    child: Icon(Icons.attach_file, color: colors.onSurfaceVariant, size: 20),
                   ),
                 ],
               ),

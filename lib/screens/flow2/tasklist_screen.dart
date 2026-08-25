@@ -2,11 +2,12 @@ import 'package:flutter/material.dart';
 
 import '../../models/task.dart' as api;
 import '../../services/task_service.dart';
+import '../../theme/app_colors.dart';
 import 'taskDetail_screen.dart';
 
 final taskService = TaskService();
 
-const _adaiOrange = Color(0xFFB5651D);
+const _adaiOrange = Color(0xFFE57A44);
 const _adaiBrown = Color(0xFF3E2B1F);
 
 // Valeurs exactes de App\Enums\TaskStatus (backend) : todo, in_progress,
@@ -132,7 +133,7 @@ class _TaskListScreenState extends State<TaskListScreen> {
   @override
   Widget build(BuildContext context) {
     return Material(
-      color: Colors.white,
+      color: Theme.of(context).colorScheme.surface,
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -141,12 +142,12 @@ class _TaskListScreenState extends State<TaskListScreen> {
             child: Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                const Text(
+                Text(
                   'Mes tâches',
                   style: TextStyle(
                     fontSize: 24,
                     fontWeight: FontWeight.bold,
-                    color: _adaiBrown,
+                    color: Theme.of(context).brightness == Brightness.dark ? Colors.white : _adaiBrown,
                   ),
                 ),
                 const CircleAvatar(
@@ -212,7 +213,7 @@ class _TaskListScreenState extends State<TaskListScreen> {
                               Text(
                                 _errorMessage!,
                                 textAlign: TextAlign.center,
-                                style: TextStyle(color: Colors.grey.shade600),
+                                style: TextStyle(color: Theme.of(context).colorScheme.onSurfaceVariant),
                               ),
                               const SizedBox(height: 12),
                               TextButton(
@@ -225,7 +226,10 @@ class _TaskListScreenState extends State<TaskListScreen> {
                       )
                     : _tasks.isEmpty
                         ? Center(
-                            child: Text('Aucune tâche', style: TextStyle(color: Colors.grey.shade600)),
+                            child: Text(
+                              'Aucune tâche',
+                              style: TextStyle(color: Theme.of(context).colorScheme.onSurfaceVariant),
+                            ),
                           )
                         : ListView.builder(
                             padding: const EdgeInsets.all(16),
@@ -254,6 +258,7 @@ class _FilterChip extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final colors = Theme.of(context).colorScheme;
     return Padding(
       padding: const EdgeInsets.only(right: 8),
       child: ChoiceChip(
@@ -262,14 +267,14 @@ class _FilterChip extends StatelessWidget {
         onSelected: (_) => onTap(),
         showCheckmark: false,
         selectedColor: _adaiOrange,
-        backgroundColor: Colors.white,
+        backgroundColor: colors.surface,
         labelStyle: TextStyle(
-          color: selected ? Colors.white : Colors.grey.shade700,
+          color: selected ? Colors.white : colors.onSurfaceVariant,
           fontWeight: FontWeight.w600,
         ),
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(20),
-          side: BorderSide(color: selected ? _adaiOrange : Colors.grey.shade300),
+          side: BorderSide(color: selected ? _adaiOrange : colors.outlineVariant),
         ),
       ),
     );
@@ -281,24 +286,26 @@ class _TaskCard extends StatelessWidget {
 
   const _TaskCard({required this.task});
 
-  ({String label, Color bg, Color fg}) get _statusStyle {
+  ({String label, AppStatusColor color}) get _statusInfo {
     switch (task.status) {
       case TaskStatus.aFaire:
-        return (label: 'À faire', bg: const Color(0xFFE3F0FB), fg: const Color(0xFF2E7CD6));
+        return (label: 'À faire', color: AppStatusColor.info);
       case TaskStatus.enCours:
-        return (label: 'En cours', bg: const Color(0xFFE5F5E9), fg: const Color(0xFF3A9B54));
+        return (label: 'En cours', color: AppStatusColor.success);
       case TaskStatus.bloque:
-        return (label: 'Bloqué', bg: const Color(0xFFFCE4E4), fg: const Color(0xFFE05B33));
+        return (label: 'Bloqué', color: AppStatusColor.danger);
       case TaskStatus.aTester:
-        return (label: 'À tester', bg: const Color(0xFFFDF0DE), fg: _adaiOrange);
+        return (label: 'À tester', color: AppStatusColor.warning);
       case TaskStatus.termine:
-        return (label: 'Terminé', bg: Colors.grey.shade200, fg: Colors.grey.shade700);
+        return (label: 'Terminé', color: AppStatusColor.neutral);
     }
   }
 
   @override
   Widget build(BuildContext context) {
-    final status = _statusStyle;
+    final colors = Theme.of(context).colorScheme;
+    final info = _statusInfo;
+    final status = statusColorFor(context, info.color);
     return InkWell(
       borderRadius: BorderRadius.circular(12),
       onTap: () {
@@ -312,9 +319,9 @@ class _TaskCard extends StatelessWidget {
         margin: const EdgeInsets.only(bottom: 12),
         padding: const EdgeInsets.all(16),
         decoration: BoxDecoration(
-          color: Colors.white,
+          color: colors.surface,
           borderRadius: BorderRadius.circular(12),
-          border: Border.all(color: Colors.grey.shade200),
+          border: Border.all(color: colors.outlineVariant),
         ),
         child: Row(
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -325,31 +332,31 @@ class _TaskCard extends StatelessWidget {
                 children: [
                   Text(
                     task.title,
-                    style: const TextStyle(
+                    style: TextStyle(
                       fontSize: 15,
                       fontWeight: FontWeight.w600,
-                      color: Colors.black87,
+                      color: colors.onSurface,
                     ),
                   ),
                   const SizedBox(height: 8),
                   Row(
                     children: [
-                      Icon(Icons.folder_outlined, size: 14, color: Colors.grey.shade500),
+                      Icon(Icons.folder_outlined, size: 14, color: colors.onSurfaceVariant),
                       const SizedBox(width: 6),
                       Text(
                         task.project,
-                        style: TextStyle(color: Colors.grey.shade600, fontSize: 12),
+                        style: TextStyle(color: colors.onSurfaceVariant, fontSize: 12),
                       ),
                     ],
                   ),
                   const SizedBox(height: 4),
                   Row(
                     children: [
-                      Icon(Icons.calendar_today_outlined, size: 14, color: Colors.grey.shade500),
+                      Icon(Icons.calendar_today_outlined, size: 14, color: colors.onSurfaceVariant),
                       const SizedBox(width: 6),
                       Text(
                         'Deadline: ${task.deadline}',
-                        style: TextStyle(color: Colors.grey.shade600, fontSize: 12),
+                        style: TextStyle(color: colors.onSurfaceVariant, fontSize: 12),
                       ),
                     ],
                   ),
@@ -367,7 +374,7 @@ class _TaskCard extends StatelessWidget {
                     borderRadius: BorderRadius.circular(20),
                   ),
                   child: Text(
-                    status.label,
+                    info.label,
                     style: TextStyle(
                       color: status.fg,
                       fontSize: 11,

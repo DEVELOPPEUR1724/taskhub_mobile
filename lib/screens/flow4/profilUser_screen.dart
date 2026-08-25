@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import '../../models/profile.dart';
 import '../../services/profil_service.dart';
 import '../../services/auth_service.dart';
+import '../../theme/theme_controller.dart';
 import '../flow1/login_screen.dart';
 import 'editProfil_screen.dart';
 import 'security_screen.dart';
@@ -10,7 +11,7 @@ import 'security_screen.dart';
 final _profilService = ProfilService();
 final _authService = AuthService();
 
-const _adaiOrange = Color(0xFFB5651D);
+const _adaiOrange = Color(0xFFE57A44);
 
 class ProfilUserScreen extends StatefulWidget {
   const ProfilUserScreen({super.key});
@@ -74,7 +75,7 @@ class _ProfilUserScreenState extends State<ProfilUserScreen> {
                 (route) => false,
               );
             },
-            style: TextButton.styleFrom(foregroundColor: Colors.red),
+            style: TextButton.styleFrom(foregroundColor: const Color(0xFFFF453A)),
             child: const Text('Se déconnecter'),
           ),
         ],
@@ -85,7 +86,7 @@ class _ProfilUserScreenState extends State<ProfilUserScreen> {
   @override
   Widget build(BuildContext context) {
     return Material(
-      color: Colors.white,
+      color: Theme.of(context).colorScheme.surface,
       child: _isLoading
           ? const Center(child: CircularProgressIndicator())
           : _errorMessage != null
@@ -98,7 +99,7 @@ class _ProfilUserScreenState extends State<ProfilUserScreen> {
                         Text(
                           _errorMessage!,
                           textAlign: TextAlign.center,
-                          style: TextStyle(color: Colors.grey.shade600),
+                          style: TextStyle(color: Theme.of(context).colorScheme.onSurfaceVariant),
                         ),
                         const SizedBox(height: 12),
                         TextButton(onPressed: _loadProfil, child: const Text('Réessayer')),
@@ -111,6 +112,7 @@ class _ProfilUserScreenState extends State<ProfilUserScreen> {
   }
 
   Widget _buildContent(Profile profile) {
+    final colors = Theme.of(context).colorScheme;
     return SingleChildScrollView(
       padding: const EdgeInsets.fromLTRB(20, 16, 20, 24),
       child: Column(
@@ -119,12 +121,12 @@ class _ProfilUserScreenState extends State<ProfilUserScreen> {
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              const Text(
+              Text(
                 'Mon profil',
                 style: TextStyle(
                   fontSize: 24,
                   fontWeight: FontWeight.bold,
-                  color: Colors.black,
+                  color: colors.onSurface,
                 ),
               ),
               const CircleAvatar(
@@ -150,16 +152,16 @@ class _ProfilUserScreenState extends State<ProfilUserScreen> {
                 children: [
                   Text(
                     profile.name,
-                    style: const TextStyle(
+                    style: TextStyle(
                       fontSize: 16,
                       fontWeight: FontWeight.w700,
-                      color: Colors.black,
+                      color: colors.onSurface,
                     ),
                   ),
                   const SizedBox(height: 2),
                   Text(
                     profile.role,
-                    style: TextStyle(color: Colors.grey.shade600, fontSize: 13),
+                    style: TextStyle(color: colors.onSurfaceVariant, fontSize: 13),
                   ),
                 ],
               ),
@@ -170,7 +172,7 @@ class _ProfilUserScreenState extends State<ProfilUserScreen> {
           Container(
             padding: const EdgeInsets.all(14),
             decoration: BoxDecoration(
-              border: Border.all(color: Colors.grey.shade200),
+              border: Border.all(color: colors.outlineVariant),
               borderRadius: BorderRadius.circular(14),
             ),
             child: Row(
@@ -189,14 +191,14 @@ class _ProfilUserScreenState extends State<ProfilUserScreen> {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      const Text(
+                      Text(
                         'Notifications push',
-                        style: TextStyle(fontWeight: FontWeight.w700, fontSize: 14, color: Colors.black),
+                        style: TextStyle(fontWeight: FontWeight.w700, fontSize: 14, color: colors.onSurface),
                       ),
                       const SizedBox(height: 2),
                       Text(
                         'Recevoir les notifications sur votre appareil',
-                        style: TextStyle(color: Colors.grey.shade600, fontSize: 12),
+                        style: TextStyle(color: colors.onSurfaceVariant, fontSize: 12),
                       ),
                     ],
                   ),
@@ -209,17 +211,66 @@ class _ProfilUserScreenState extends State<ProfilUserScreen> {
               ],
             ),
           ),
+          const SizedBox(height: 16),
+
+          ListenableBuilder(
+            listenable: themeController,
+            builder: (context, _) {
+              return Container(
+                padding: const EdgeInsets.all(14),
+                decoration: BoxDecoration(
+                  border: Border.all(color: colors.outlineVariant),
+                  borderRadius: BorderRadius.circular(14),
+                ),
+                child: Row(
+                  children: [
+                    Container(
+                      width: 40,
+                      height: 40,
+                      decoration: BoxDecoration(
+                        color: const Color(0xFFFDF0DE),
+                        borderRadius: BorderRadius.circular(10),
+                      ),
+                      child: const Icon(Icons.dark_mode_outlined, color: _adaiOrange, size: 20),
+                    ),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            'Mode sombre',
+                            style: TextStyle(fontWeight: FontWeight.w700, fontSize: 14, color: colors.onSurface),
+                          ),
+                          const SizedBox(height: 2),
+                          Text(
+                            'Basculer vers un thème sombre',
+                            style: TextStyle(color: colors.onSurfaceVariant, fontSize: 12),
+                          ),
+                        ],
+                      ),
+                    ),
+                    Switch(
+                      value: themeController.isDarkMode,
+                      activeColor: _adaiOrange,
+                      onChanged: themeController.setDarkMode,
+                    ),
+                  ],
+                ),
+              );
+            },
+          ),
           const SizedBox(height: 24),
 
-          const Text(
+          Text(
             'Mon compte',
-            style: TextStyle(fontSize: 16, fontWeight: FontWeight.w700, color: Colors.black),
+            style: TextStyle(fontSize: 16, fontWeight: FontWeight.w700, color: colors.onSurface),
           ),
           const SizedBox(height: 12),
 
           Container(
             decoration: BoxDecoration(
-              border: Border.all(color: Colors.grey.shade200),
+              border: Border.all(color: colors.outlineVariant),
               borderRadius: BorderRadius.circular(14),
             ),
             child: Column(
@@ -234,7 +285,7 @@ class _ProfilUserScreenState extends State<ProfilUserScreen> {
                     if (updated != null) setState(() => _profile = updated);
                   },
                 ),
-                Divider(height: 1, color: Colors.grey.shade100),
+                Divider(height: 1, color: colors.outlineVariant),
                 _AccountRow(
                   icon: Icons.verified_user_outlined,
                   label: 'Sécurité',
@@ -244,7 +295,7 @@ class _ProfilUserScreenState extends State<ProfilUserScreen> {
                     );
                   },
                 ),
-                Divider(height: 1, color: Colors.grey.shade100),
+                Divider(height: 1, color: colors.outlineVariant),
                 _AccountRow(
                   icon: Icons.language_outlined,
                   label: 'Langue',
@@ -253,7 +304,7 @@ class _ProfilUserScreenState extends State<ProfilUserScreen> {
                     // TODO: afficher le sélecteur de langue
                   },
                 ),
-                Divider(height: 1, color: Colors.grey.shade100),
+                Divider(height: 1, color: colors.outlineVariant),
                 _AccountRow(
                   icon: Icons.info_outline,
                   label: 'À propos',
@@ -271,13 +322,13 @@ class _ProfilUserScreenState extends State<ProfilUserScreen> {
             height: 48,
             child: OutlinedButton.icon(
               onPressed: _logout,
-              icon: const Icon(Icons.logout, color: Colors.red, size: 18),
+              icon: const Icon(Icons.logout, color: Color(0xFFFF453A), size: 18),
               label: const Text(
                 'Se déconnecter',
-                style: TextStyle(color: Colors.red, fontSize: 15, fontWeight: FontWeight.w600),
+                style: TextStyle(color: Color(0xFFFF453A), fontSize: 15, fontWeight: FontWeight.w600),
               ),
               style: OutlinedButton.styleFrom(
-                side: const BorderSide(color: Colors.red),
+                side: const BorderSide(color: Color(0xFFFF453A)),
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(8),
                 ),
@@ -288,7 +339,7 @@ class _ProfilUserScreenState extends State<ProfilUserScreen> {
           Text(
             'Vous serez déconnecté et votre session sera révoquée sur tous vos appareils.',
             textAlign: TextAlign.center,
-            style: TextStyle(color: Colors.grey.shade500, fontSize: 12),
+            style: TextStyle(color: colors.onSurfaceVariant, fontSize: 12),
           ),
         ],
       ),
@@ -311,28 +362,29 @@ class _AccountRow extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final colors = Theme.of(context).colorScheme;
     return InkWell(
       onTap: onTap,
       child: Padding(
         padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 14),
         child: Row(
           children: [
-            Icon(icon, size: 20, color: Colors.grey.shade700),
+            Icon(icon, size: 20, color: colors.onSurfaceVariant),
             const SizedBox(width: 12),
             Expanded(
               child: Text(
                 label,
-                style: const TextStyle(fontSize: 14, color: Colors.black87),
+                style: TextStyle(fontSize: 14, color: colors.onSurface),
               ),
             ),
             if (trailingText != null) ...[
               Text(
                 trailingText!,
-                style: TextStyle(color: Colors.grey.shade500, fontSize: 13),
+                style: TextStyle(color: colors.onSurfaceVariant, fontSize: 13),
               ),
               const SizedBox(width: 6),
             ],
-            Icon(Icons.chevron_right, size: 18, color: Colors.grey.shade400),
+            Icon(Icons.chevron_right, size: 18, color: colors.onSurfaceVariant),
           ],
         ),
       ),

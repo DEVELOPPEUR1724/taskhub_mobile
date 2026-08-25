@@ -7,15 +7,15 @@ import '../../models/conversation.dart' as api;
 
 final chatService = ChatService();
 
-const _adaiOrange = Color(0xFFB5651D);
+const _adaiOrange = Color(0xFFE57A44);
 
 // Palette utilisée pour donner une icône/couleur déterministe à chaque
 // conversation, faute d'un tel champ renvoyé par l'API.
 const _iconPalette = [
-  (Icons.phone_iphone, Color(0xFF3A9B54)),
+  (Icons.phone_iphone, Color(0xFF32D74B)),
   (Icons.terminal, Color(0xFF8B5CF6)),
   (Icons.dashboard_outlined, Color(0xFFE0A527)),
-  (Icons.bug_report_outlined, Color(0xFF2E7CD6)),
+  (Icons.bug_report_outlined, Color(0xFF0A84FF)),
   (Icons.campaign_outlined, Color(0xFFE0709B)),
 ];
 
@@ -123,8 +123,9 @@ class _ConversationListScreenState extends State<ConversationListScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final colors = Theme.of(context).colorScheme;
     return Material(
-      color: Colors.white,
+      color: colors.surface,
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -133,12 +134,12 @@ class _ConversationListScreenState extends State<ConversationListScreen> {
             child: Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                const Text(
+                Text(
                   'Conversations',
                   style: TextStyle(
                     fontSize: 24,
                     fontWeight: FontWeight.bold,
-                    color: Colors.black,
+                    color: colors.onSurface,
                   ),
                 ),
                 Row(
@@ -174,7 +175,7 @@ class _ConversationListScreenState extends State<ConversationListScreen> {
             padding: const EdgeInsets.fromLTRB(20, 4, 20, 8),
             child: Text(
               'Discussions par projet',
-              style: TextStyle(color: Colors.grey.shade600, fontSize: 13),
+              style: TextStyle(color: colors.onSurfaceVariant, fontSize: 13),
             ),
           ),
           Expanded(
@@ -190,7 +191,7 @@ class _ConversationListScreenState extends State<ConversationListScreen> {
                               Text(
                                 _errorMessage!,
                                 textAlign: TextAlign.center,
-                                style: TextStyle(color: Colors.grey.shade600),
+                                style: TextStyle(color: colors.onSurfaceVariant),
                               ),
                               const SizedBox(height: 12),
                               TextButton(
@@ -205,13 +206,13 @@ class _ConversationListScreenState extends State<ConversationListScreen> {
                         ? Center(
                             child: Text(
                               'Aucune conversation pour l\'instant',
-                              style: TextStyle(color: Colors.grey.shade600),
+                              style: TextStyle(color: colors.onSurfaceVariant),
                             ),
                           )
                         : ListView.separated(
                             padding: const EdgeInsets.symmetric(horizontal: 16),
                             itemCount: _conversations.length,
-                            separatorBuilder: (context, index) => Divider(height: 1, color: Colors.grey.shade100),
+                            separatorBuilder: (context, index) => Divider(height: 1, color: colors.outlineVariant),
                             itemBuilder: (context, index) {
                               return _ConversationTile(conversation: _conversations[index]);
                             },
@@ -230,6 +231,7 @@ class _ConversationTile extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final colors = Theme.of(context).colorScheme;
     return InkWell(
       onTap: () {
         Navigator.of(context).push(
@@ -262,10 +264,10 @@ class _ConversationTile extends StatelessWidget {
                 children: [
                   Text(
                     conversation.projectName,
-                    style: const TextStyle(
+                    style: TextStyle(
                       fontSize: 15,
                       fontWeight: FontWeight.w700,
-                      color: Colors.black,
+                      color: colors.onSurface,
                     ),
                   ),
                   const SizedBox(height: 4),
@@ -275,7 +277,7 @@ class _ConversationTile extends StatelessWidget {
                         : '${conversation.lastSender}: ${conversation.lastMessage}',
                     maxLines: 2,
                     overflow: TextOverflow.ellipsis,
-                    style: TextStyle(color: Colors.grey.shade600, fontSize: 13, height: 1.3),
+                    style: TextStyle(color: colors.onSurfaceVariant, fontSize: 13, height: 1.3),
                   ),
                 ],
               ),
@@ -286,7 +288,7 @@ class _ConversationTile extends StatelessWidget {
               children: [
                 Text(
                   conversation.time,
-                  style: TextStyle(color: Colors.grey.shade500, fontSize: 12),
+                  style: TextStyle(color: colors.onSurfaceVariant, fontSize: 12),
                 ),
                 if (conversation.unreadCount > 0) ...[
                   const SizedBox(height: 8),

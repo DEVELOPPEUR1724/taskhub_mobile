@@ -10,7 +10,7 @@ import '../screens/flow6/pointage_screen.dart';
 
 
 
-const _adaiOrange = Color(0xFFB5651D);
+const _adaiOrange = Color(0xFFE57A44);
 
 class MainScaffold extends StatefulWidget {
   const MainScaffold({super.key});
@@ -34,7 +34,6 @@ class _MainScaffoldState extends State<MainScaffold> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Colors.white,
       body: SafeArea(
         child: IndexedStack(
           index: _selectedIndex,
@@ -46,7 +45,7 @@ class _MainScaffoldState extends State<MainScaffold> {
         onTap: (index) => setState(() => _selectedIndex = index),
         type: BottomNavigationBarType.fixed,
         selectedItemColor: _adaiOrange,
-        unselectedItemColor: Colors.grey.shade500,
+        unselectedItemColor: Theme.of(context).colorScheme.onSurfaceVariant,
         items: const [
           BottomNavigationBarItem(
             icon: Icon(Icons.auto_awesome_outlined),

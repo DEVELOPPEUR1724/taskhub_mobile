@@ -10,7 +10,7 @@ import '../../utils/project_status.dart';
 final _notificationService = NotificationService();
 final _projectService = ProjectService();
 
-const _adaiOrange = Color(0xFFB5651D);
+const _adaiOrange = Color(0xFFE57A44);
 const _purple = Color(0xFF7C5CE0);
 
 class ProjetListScreen extends StatefulWidget {
@@ -89,12 +89,13 @@ class _ProjetListScreenState extends State<ProjetListScreen> {
   @override
   Widget build(BuildContext context) {
     return Material(
-      color: Colors.white,
+      color: Theme.of(context).colorScheme.surface,
       child: _buildBody(context),
     );
   }
 
   Widget _buildBody(BuildContext context) {
+    final colors = Theme.of(context).colorScheme;
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -103,15 +104,15 @@ class _ProjetListScreenState extends State<ProjetListScreen> {
           child: Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              Icon(Icons.menu, color: Colors.grey.shade800),
-              const Text(
+              Icon(Icons.menu, color: colors.onSurfaceVariant),
+              Text(
                 'Projets',
-                style: TextStyle(fontSize: 18, fontWeight: FontWeight.w700, color: Colors.black),
+                style: TextStyle(fontSize: 18, fontWeight: FontWeight.w700, color: colors.onSurface),
               ),
               Row(
                 children: [
                   IconButton(
-                    icon: Icon(Icons.search, color: Colors.grey.shade800),
+                    icon: Icon(Icons.search, color: colors.onSurfaceVariant),
                     onPressed: () {
                       // TODO: afficher la recherche de projets
                     },
@@ -120,7 +121,7 @@ class _ProjetListScreenState extends State<ProjetListScreen> {
                     clipBehavior: Clip.none,
                     children: [
                       IconButton(
-                        icon: Icon(Icons.notifications_none, color: Colors.grey.shade800),
+                        icon: Icon(Icons.notifications_none, color: colors.onSurfaceVariant),
                         onPressed: _openNotifications,
                       ),
                       if (_unreadNotifications > 0)
@@ -130,7 +131,7 @@ class _ProjetListScreenState extends State<ProjetListScreen> {
                           child: Container(
                             padding: const EdgeInsets.all(3),
                             decoration: const BoxDecoration(
-                              color: Colors.red,
+                              color: Color(0xFFFF453A),
                               shape: BoxShape.circle,
                             ),
                             constraints: const BoxConstraints(minWidth: 16, minHeight: 16),
@@ -161,7 +162,7 @@ class _ProjetListScreenState extends State<ProjetListScreen> {
                             Text(
                               _errorMessage!,
                               textAlign: TextAlign.center,
-                              style: TextStyle(color: Colors.grey.shade600),
+                              style: TextStyle(color: colors.onSurfaceVariant),
                             ),
                             const SizedBox(height: 12),
                             TextButton(
@@ -193,7 +194,7 @@ class _ProjetListScreenState extends State<ProjetListScreen> {
                                 child: _StatCard(
                                   icon: Icons.show_chart,
                                   iconBg: const Color(0xFFE5F5E9),
-                                  iconColor: const Color(0xFF3A9B54),
+                                  iconColor: const Color(0xFF32D74B),
                                   value: '$_avgProgress%',
                                   label: 'Avancement moyen',
                                 ),
@@ -207,7 +208,7 @@ class _ProjetListScreenState extends State<ProjetListScreen> {
                                 child: _StatCard(
                                   icon: Icons.trending_up,
                                   iconBg: const Color(0xFFE3F0FB),
-                                  iconColor: const Color(0xFF2E7CD6),
+                                  iconColor: const Color(0xFF0A84FF),
                                   value: '$_inProgressCount',
                                   label: 'Projets en cours',
                                 ),
@@ -225,15 +226,15 @@ class _ProjetListScreenState extends State<ProjetListScreen> {
                             ],
                           ),
                           const SizedBox(height: 24),
-                          const Text(
+                          Text(
                             'Liste des projets',
-                            style: TextStyle(fontSize: 16, fontWeight: FontWeight.w700, color: Colors.black),
+                            style: TextStyle(fontSize: 16, fontWeight: FontWeight.w700, color: colors.onSurface),
                           ),
                           const SizedBox(height: 8),
                           if (_projects.isEmpty)
                             Padding(
                               padding: const EdgeInsets.symmetric(vertical: 24),
-                              child: Text('Aucun projet', style: TextStyle(color: Colors.grey.shade600)),
+                              child: Text('Aucun projet', style: TextStyle(color: colors.onSurfaceVariant)),
                             )
                           else
                             for (final project in _projects) _ProjectCard(project: project),
@@ -264,10 +265,11 @@ class _StatCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final colors = Theme.of(context).colorScheme;
     return Container(
       padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
-        border: Border.all(color: Colors.grey.shade200),
+        border: Border.all(color: colors.outlineVariant),
         borderRadius: BorderRadius.circular(14),
       ),
       child: Column(
@@ -285,12 +287,12 @@ class _StatCard extends StatelessWidget {
           const SizedBox(height: 10),
           Text(
             value,
-            style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w800, color: Colors.black),
+            style: TextStyle(fontSize: 18, fontWeight: FontWeight.w800, color: colors.onSurface),
           ),
           const SizedBox(height: 2),
           Text(
             label,
-            style: TextStyle(color: Colors.grey.shade600, fontSize: 12),
+            style: TextStyle(color: colors.onSurfaceVariant, fontSize: 12),
           ),
         ],
       ),
@@ -305,9 +307,10 @@ class _ProjectCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final colors = Theme.of(context).colorScheme;
     final color = projectColorFor(project.id);
     final letter = project.name.isNotEmpty ? project.name[0].toUpperCase() : '?';
-    final statusStyle = projectStatusStyle(project.status);
+    final statusStyle = projectStatusStyle(context, project.status);
 
     return InkWell(
       onTap: () {
@@ -322,7 +325,7 @@ class _ProjectCard extends StatelessWidget {
         margin: const EdgeInsets.only(bottom: 12),
         padding: const EdgeInsets.all(14),
         decoration: BoxDecoration(
-          border: Border.all(color: Colors.grey.shade200),
+          border: Border.all(color: colors.outlineVariant),
           borderRadius: BorderRadius.circular(14),
         ),
         child: Column(
@@ -351,12 +354,12 @@ class _ProjectCard extends StatelessWidget {
                     children: [
                       Text(
                         project.name,
-                        style: const TextStyle(fontSize: 14.5, fontWeight: FontWeight.w700, color: Colors.black),
+                        style: TextStyle(fontSize: 14.5, fontWeight: FontWeight.w700, color: colors.onSurface),
                       ),
                       const SizedBox(height: 2),
                       Text(
                         project.client ?? '',
-                        style: TextStyle(color: Colors.grey.shade600, fontSize: 12.5),
+                        style: TextStyle(color: colors.onSurfaceVariant, fontSize: 12.5),
                       ),
                     ],
                   ),
@@ -380,12 +383,12 @@ class _ProjectCard extends StatelessWidget {
                 if (project.tasksCount != null)
                   Text(
                     '${project.tasksCount} tâche${project.tasksCount! > 1 ? 's' : ''}',
-                    style: TextStyle(fontSize: 12, color: Colors.grey.shade600),
+                    style: TextStyle(fontSize: 12, color: colors.onSurfaceVariant),
                   ),
                 const Spacer(),
                 Text(
                   '${project.progress}%',
-                  style: TextStyle(fontSize: 12.5, fontWeight: FontWeight.w700, color: Colors.grey.shade700),
+                  style: TextStyle(fontSize: 12.5, fontWeight: FontWeight.w700, color: colors.onSurfaceVariant),
                 ),
               ],
             ),
@@ -395,7 +398,7 @@ class _ProjectCard extends StatelessWidget {
               child: LinearProgressIndicator(
                 value: project.progress / 100,
                 minHeight: 6,
-                backgroundColor: Colors.grey.shade100,
+                backgroundColor: colors.surfaceContainerHighest,
                 valueColor: const AlwaysStoppedAnimation(projectProgressColor),
               ),
             ),

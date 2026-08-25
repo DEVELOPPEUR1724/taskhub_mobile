@@ -15,7 +15,7 @@ import '../../utils/file_icon.dart';
 
 final chatService = ChatService();
 
-const _adaiOrange = Color(0xFFB5651D);
+const _adaiOrange = Color(0xFFE57A44);
 
 class ChatMessage {
   final String id;
@@ -193,7 +193,7 @@ class _ConversationScreenState extends State<ConversationScreen> {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text(e.toString().replaceFirst('Exception: ', '')),
-          backgroundColor: Colors.red,
+          backgroundColor: const Color(0xFFFF453A),
         ),
       );
     }
@@ -218,7 +218,7 @@ class _ConversationScreenState extends State<ConversationScreen> {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text(e.toString().replaceFirst('Exception: ', '')),
-          backgroundColor: Colors.red,
+          backgroundColor: const Color(0xFFFF453A),
         ),
       );
     }
@@ -226,24 +226,23 @@ class _ConversationScreenState extends State<ConversationScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final colors = Theme.of(context).colorScheme;
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     return Scaffold(
-      backgroundColor: const Color(0xFFFAF7F4),
+      backgroundColor: isDark ? colors.surface : const Color(0xFFFAF7F4),
       appBar: AppBar(
-        backgroundColor: Colors.white,
-        elevation: 0,
-        iconTheme: const IconThemeData(color: Colors.black87),
         titleSpacing: 0,
         title: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Text(
               _headerTitle,
-              style: const TextStyle(color: Colors.black, fontWeight: FontWeight.w700, fontSize: 15),
+              style: TextStyle(color: colors.onSurface, fontWeight: FontWeight.w700, fontSize: 15),
             ),
             if (_headerSubtitle.isNotEmpty)
               Text(
                 _headerSubtitle,
-                style: TextStyle(color: Colors.grey.shade600, fontSize: 11.5),
+                style: TextStyle(color: colors.onSurfaceVariant, fontSize: 11.5),
               ),
           ],
         ),
@@ -258,7 +257,7 @@ class _ConversationScreenState extends State<ConversationScreen> {
                       left: i * 18.0,
                       child: CircleAvatar(
                         radius: 14,
-                        backgroundColor: Colors.white,
+                        backgroundColor: colors.surface,
                         child: CircleAvatar(
                           radius: 12,
                           backgroundImage: NetworkImage('https://i.pravatar.cc/100?u=${_members[i].id}'),
@@ -269,7 +268,7 @@ class _ConversationScreenState extends State<ConversationScreen> {
               ),
             ),
           IconButton(
-            icon: const Icon(Icons.more_vert, color: Colors.black87),
+            icon: Icon(Icons.more_vert, color: colors.onSurface),
             onPressed: widget.conversationId == null
                 ? null
                 : () {
@@ -301,7 +300,7 @@ class _ConversationScreenState extends State<ConversationScreen> {
                                 Text(
                                   _errorMessage!,
                                   textAlign: TextAlign.center,
-                                  style: TextStyle(color: Colors.grey.shade600),
+                                  style: TextStyle(color: colors.onSurfaceVariant),
                                 ),
                                 const SizedBox(height: 12),
                                 TextButton(
@@ -316,7 +315,7 @@ class _ConversationScreenState extends State<ConversationScreen> {
                           ? Center(
                               child: Text(
                                 'Aucun message pour l\'instant',
-                                style: TextStyle(color: Colors.grey.shade600),
+                                style: TextStyle(color: colors.onSurfaceVariant),
                               ),
                             )
                           : ListView.builder(
@@ -344,6 +343,7 @@ class _MessageBubble extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final colors = Theme.of(context).colorScheme;
     final isMe = message.isMe;
     return Padding(
       padding: const EdgeInsets.only(bottom: 14),
@@ -379,7 +379,7 @@ class _MessageBubble extends StatelessWidget {
                           if (message.role.isNotEmpty)
                             TextSpan(
                               text: '  •  ${message.role}',
-                              style: TextStyle(color: Colors.grey.shade500, fontSize: 12),
+                              style: TextStyle(color: colors.onSurfaceVariant, fontSize: 12),
                             ),
                         ],
                       ),
@@ -388,9 +388,9 @@ class _MessageBubble extends StatelessWidget {
                 Container(
                   padding: const EdgeInsets.all(12),
                   decoration: BoxDecoration(
-                    color: isMe ? const Color(0xFFDCF3DC) : Colors.white,
+                    color: isMe ? const Color(0xFFDCF3DC) : colors.surface,
                     borderRadius: BorderRadius.circular(14),
-                    border: isMe ? null : Border.all(color: Colors.grey.shade200),
+                    border: isMe ? null : Border.all(color: colors.outlineVariant),
                   ),
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
@@ -398,7 +398,7 @@ class _MessageBubble extends StatelessWidget {
                       if (message.message.isNotEmpty)
                         Text(
                           message.message,
-                          style: const TextStyle(fontSize: 13.5, color: Colors.black87, height: 1.4),
+                          style: TextStyle(fontSize: 13.5, color: isMe ? Colors.black87 : colors.onSurface, height: 1.4),
                         ),
                       if (message.imageUrl != null) ...[
                         const SizedBox(height: 8),
@@ -422,9 +422,9 @@ class _MessageBubble extends StatelessWidget {
                                 errorBuilder: (context, error, stackTrace) => Container(
                                   height: 120,
                                   width: 220,
-                                  color: Colors.grey.shade200,
+                                  color: colors.surfaceContainerHighest,
                                   alignment: Alignment.center,
-                                  child: Icon(Icons.broken_image_outlined, color: Colors.grey.shade400),
+                                  child: Icon(Icons.broken_image_outlined, color: colors.onSurfaceVariant),
                                 ),
                               ),
                             ),
@@ -446,11 +446,11 @@ class _MessageBubble extends StatelessWidget {
                     children: [
                       Text(
                         message.time,
-                        style: TextStyle(color: Colors.grey.shade400, fontSize: 10.5),
+                        style: TextStyle(color: colors.onSurfaceVariant, fontSize: 10.5),
                       ),
                       if (isMe && message.isRead) ...[
                         const SizedBox(width: 4),
-                        const Icon(Icons.done_all, size: 13, color: Color(0xFF3A9B54)),
+                        const Icon(Icons.done_all, size: 13, color: Color(0xFF32D74B)),
                       ],
                     ],
                   ),
@@ -480,13 +480,14 @@ class _FileAttachmentCard extends StatelessWidget {
     final opened = await launchUrl(uri, mode: LaunchMode.externalApplication);
     if (!opened && context.mounted) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Impossible d\'ouvrir ce fichier.'), backgroundColor: Colors.red),
+        const SnackBar(content: Text('Impossible d\'ouvrir ce fichier.'), backgroundColor: Color(0xFFFF453A)),
       );
     }
   }
 
   @override
   Widget build(BuildContext context) {
+    final colors = Theme.of(context).colorScheme;
     final extension = fileName.contains('.') ? fileName.split('.').last.toLowerCase() : '';
     return InkWell(
       onTap: () => _openFile(context),
@@ -495,7 +496,7 @@ class _FileAttachmentCard extends StatelessWidget {
         width: 220,
         padding: const EdgeInsets.all(10),
         decoration: BoxDecoration(
-          color: const Color(0xFFF5F5F5),
+          color: colors.surfaceContainerHighest,
           borderRadius: BorderRadius.circular(10),
         ),
         child: Row(
@@ -504,7 +505,7 @@ class _FileAttachmentCard extends StatelessWidget {
               width: 38,
               height: 38,
               decoration: BoxDecoration(
-                color: Colors.white,
+                color: colors.surface,
                 borderRadius: BorderRadius.circular(8),
               ),
               child: Icon(fileIconForExtension(extension), size: 18, color: _adaiOrange),
@@ -518,13 +519,13 @@ class _FileAttachmentCard extends StatelessWidget {
                     fileName,
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
-                    style: const TextStyle(fontSize: 12.5, fontWeight: FontWeight.w600, color: Colors.black87),
+                    style: TextStyle(fontSize: 12.5, fontWeight: FontWeight.w600, color: colors.onSurface),
                   ),
                   if (fileSize != null) ...[
                     const SizedBox(height: 2),
                     Text(
                       formatFileSize(fileSize),
-                      style: TextStyle(color: Colors.grey.shade500, fontSize: 11),
+                      style: TextStyle(color: colors.onSurfaceVariant, fontSize: 11),
                     ),
                   ],
                 ],
@@ -550,9 +551,10 @@ class _MessageInputBar extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final colors = Theme.of(context).colorScheme;
     return Container(
       padding: const EdgeInsets.fromLTRB(12, 8, 12, 12),
-      color: Colors.white,
+      color: colors.surface,
       child: Row(
         children: [
           GestureDetector(
@@ -570,7 +572,7 @@ class _MessageInputBar extends StatelessWidget {
                 );
               }
             },
-            child: Icon(Icons.image_outlined, color: Colors.grey.shade500, size: 22),
+            child: Icon(Icons.image_outlined, color: colors.onSurfaceVariant, size: 22),
           ),
           const SizedBox(width: 12),
           GestureDetector(
@@ -598,19 +600,19 @@ class _MessageInputBar extends StatelessWidget {
                 ScaffoldMessenger.of(context).showSnackBar(
                   SnackBar(
                     content: Text('Sélection de fichier impossible : $e'),
-                    backgroundColor: Colors.red,
+                    backgroundColor: const Color(0xFFFF453A),
                   ),
                 );
               }
             },
-            child: Icon(Icons.attach_file, color: Colors.grey.shade500, size: 22),
+            child: Icon(Icons.attach_file, color: colors.onSurfaceVariant, size: 22),
           ),
           const SizedBox(width: 8),
           Expanded(
             child: Container(
               padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
               decoration: BoxDecoration(
-                color: const Color(0xFFF5F5F5),
+                color: colors.surfaceContainerHighest,
                 borderRadius: BorderRadius.circular(24),
               ),
               child: TextField(

@@ -1,8 +1,12 @@
 import 'package:flutter/material.dart';
 
 import 'screens/flow1/login_screen.dart';
+import 'theme/app_theme.dart';
+import 'theme/theme_controller.dart';
 
-void main() {
+void main() async {
+  WidgetsFlutterBinding.ensureInitialized();
+  await themeController.load();
   runApp(const MyApp());
 }
 
@@ -11,32 +15,18 @@ class MyApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return MaterialApp(
-      debugShowCheckedModeBanner: false,
-      title: 'ADAI TaskHub',
-      theme: ThemeData(
-        colorScheme: ColorScheme.fromSeed(seedColor: const Color(0xFFB5651D)),
-        useMaterial3: true,
-        inputDecorationTheme: InputDecorationTheme(
-          filled: true,
-          fillColor: Colors.white,
-          border: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(8),
-            borderSide: BorderSide(color: Colors.grey.shade300),
-          ),
-          enabledBorder: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(8),
-            borderSide: BorderSide(color: Colors.grey.shade300),
-          ),
-          focusedBorder: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(8),
-            borderSide: const BorderSide(color: Color(0xFFB5651D)),
-          ),
-          contentPadding:
-              const EdgeInsets.symmetric(horizontal: 14, vertical: 14),
-        ),
-      ),
-      home: const LoginScreen(),
+    return ListenableBuilder(
+      listenable: themeController,
+      builder: (context, _) {
+        return MaterialApp(
+          debugShowCheckedModeBanner: false,
+          title: 'ADAI TaskHub',
+          theme: AppTheme.light,
+          darkTheme: AppTheme.dark,
+          themeMode: themeController.isDarkMode ? ThemeMode.dark : ThemeMode.light,
+          home: const LoginScreen(),
+        );
+      },
     );
   }
 }

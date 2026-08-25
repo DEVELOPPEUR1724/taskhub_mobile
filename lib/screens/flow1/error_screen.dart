@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../flow2/tasklist_screen.dart';
 
-const _adaiOrange = Color(0xFFB5651D);
+const _adaiOrange = Color(0xFFE57A44);
 const _adaiBrown = Color(0xFF3E2B1F);
 
 class ErrorScreen extends StatefulWidget {
@@ -15,8 +15,8 @@ class ErrorScreen extends StatefulWidget {
 class _ErrorScreenState extends State<ErrorScreen> {
   @override
   Widget build(BuildContext context) {
+    final colors = Theme.of(context).colorScheme;
     return Scaffold(
-      backgroundColor: Colors.white,
       body: SafeArea(
         child: Center(
           child: SingleChildScrollView(
@@ -40,19 +40,19 @@ class _ErrorScreenState extends State<ErrorScreen> {
                     ),
                   ),
                   const SizedBox(height: 24),
-                  const Text(
+                  Text(
                     'Accès refusé',
                     style: TextStyle(
                       fontSize: 22,
                       fontWeight: FontWeight.bold,
-                      color: _adaiBrown,
+                      color: colors.brightness == Brightness.dark ? Colors.white : _adaiBrown,
                     ),
                   ),
                   const SizedBox(height: 8),
                   Text(
                     'Votre compte est inactif ou les\nidentifiants sont incorrects.',
                     textAlign: TextAlign.center,
-                    style: TextStyle(color: Colors.grey.shade600, fontSize: 14),
+                    style: TextStyle(color: colors.onSurfaceVariant, fontSize: 14),
                   ),
                   const SizedBox(height: 28),
                   Container(

@@ -2,11 +2,12 @@ import 'package:flutter/material.dart';
 
 import '../../models/workday.dart';
 import '../../services/pointage_service.dart';
+import '../../theme/app_colors.dart';
 import '../../utils/french_date.dart';
 
 final _pointageService = PointageService();
 
-const _adaiOrange = Color(0xFFB5651D);
+const _adaiOrange = Color(0xFFE57A44);
 
 class PointageHistoriqueScreen extends StatefulWidget {
   const PointageHistoriqueScreen({super.key});
@@ -50,19 +51,16 @@ class _PointageHistoriqueScreenState extends State<PointageHistoriqueScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Colors.white,
       appBar: AppBar(
-        backgroundColor: Colors.white,
         elevation: 0,
-        iconTheme: const IconThemeData(color: Colors.black87),
         centerTitle: true,
         title: const Text(
           'Historique Pointage',
-          style: TextStyle(color: Colors.black, fontWeight: FontWeight.w700, fontSize: 16),
+          style: TextStyle(fontWeight: FontWeight.w700, fontSize: 16),
         ),
         actions: [
           IconButton(
-            icon: const Icon(Icons.filter_list, color: Colors.black87),
+            icon: const Icon(Icons.filter_list),
             onPressed: () {
               // TODO: afficher les filtres (période, statut, etc.)
             },
@@ -82,7 +80,7 @@ class _PointageHistoriqueScreenState extends State<PointageHistoriqueScreen> {
                           Text(
                             _errorMessage!,
                             textAlign: TextAlign.center,
-                            style: TextStyle(color: Colors.grey.shade600),
+                            style: TextStyle(color: Theme.of(context).colorScheme.onSurfaceVariant),
                           ),
                           const SizedBox(height: 12),
                           TextButton(onPressed: _loadHistory, child: const Text('Réessayer')),
@@ -92,7 +90,10 @@ class _PointageHistoriqueScreenState extends State<PointageHistoriqueScreen> {
                   )
                 : _history.isEmpty
                     ? Center(
-                        child: Text('Aucun pointage enregistré', style: TextStyle(color: Colors.grey.shade600)),
+                        child: Text(
+                          'Aucun pointage enregistré',
+                          style: TextStyle(color: Theme.of(context).colorScheme.onSurfaceVariant),
+                        ),
                       )
                     : ListView.builder(
                         padding: const EdgeInsets.all(16),
@@ -111,11 +112,16 @@ class _PointageDayTile extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final colors = Theme.of(context).colorScheme;
+    final completionStyle = statusColorFor(
+      context,
+      day.isComplete ? AppStatusColor.success : AppStatusColor.warning,
+    );
     return Container(
       margin: const EdgeInsets.only(bottom: 12),
       padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
-        border: Border.all(color: Colors.grey.shade200),
+        border: Border.all(color: colors.outlineVariant),
         borderRadius: BorderRadius.circular(12),
       ),
       child: Row(
@@ -137,22 +143,22 @@ class _PointageDayTile extends StatelessWidget {
               children: [
                 Text(
                   formatFrenchDate(day.workDate),
-                  style: const TextStyle(
+                  style: TextStyle(
                     fontSize: 14,
                     fontWeight: FontWeight.w700,
-                    color: Colors.black,
+                    color: colors.onSurface,
                   ),
                 ),
                 const SizedBox(height: 4),
                 Row(
                   children: [
-                    Icon(Icons.access_time, size: 13, color: Colors.grey.shade500),
+                    Icon(Icons.access_time, size: 13, color: colors.onSurfaceVariant),
                     const SizedBox(width: 4),
                     Text(
                       day.pauseCount == 0
                           ? '0 pause'
                           : '${day.pauseCount} pause${day.pauseCount > 1 ? 's' : ''} (${day.pauseDuration})',
-                      style: TextStyle(color: Colors.grey.shade600, fontSize: 12.5),
+                      style: TextStyle(color: colors.onSurfaceVariant, fontSize: 12.5),
                     ),
                   ],
                 ),
@@ -165,19 +171,19 @@ class _PointageDayTile extends StatelessWidget {
             children: [
               Text(
                 day.durationLabel,
-                style: const TextStyle(fontSize: 13.5, fontWeight: FontWeight.w600, color: Colors.black),
+                style: TextStyle(fontSize: 13.5, fontWeight: FontWeight.w600, color: colors.onSurface),
               ),
               const SizedBox(height: 6),
               Container(
                 padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 3),
                 decoration: BoxDecoration(
-                  color: day.isComplete ? const Color(0xFFE5F5E9) : const Color(0xFFFDF0DE),
+                  color: completionStyle.bg,
                   borderRadius: BorderRadius.circular(20),
                 ),
                 child: Text(
                   day.isComplete ? 'Complet' : 'Incomplet',
                   style: TextStyle(
-                    color: day.isComplete ? const Color(0xFF3A9B54) : _adaiOrange,
+                    color: completionStyle.fg,
                     fontSize: 11,
                     fontWeight: FontWeight.w600,
                   ),

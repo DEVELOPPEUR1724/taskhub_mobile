@@ -3,7 +3,7 @@ import 'dart:typed_data';
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 
-const _adaiOrange = Color(0xFFB5651D);
+const _adaiOrange = Color(0xFFE57A44);
 
 class TaskUploadImgScreen extends StatefulWidget {
   const TaskUploadImgScreen({super.key});
@@ -49,7 +49,7 @@ class _TaskUploadImgScreenState extends State<TaskUploadImgScreen> {
                 ? 'Caméra indisponible ou accès refusé.'
                 : 'Impossible de sélectionner une image.',
           ),
-          backgroundColor: Colors.red,
+          backgroundColor: const Color(0xFFFF453A),
         ),
       );
     }
@@ -78,8 +78,8 @@ class _TaskUploadImgScreenState extends State<TaskUploadImgScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final colors = Theme.of(context).colorScheme;
     return Scaffold(
-      backgroundColor: Colors.white,
       body: SafeArea(
         child: Column(
           children: [
@@ -88,15 +88,15 @@ class _TaskUploadImgScreenState extends State<TaskUploadImgScreen> {
               child: Row(
                 children: [
                   IconButton(
-                    icon: const Icon(Icons.arrow_back, color: Colors.black87),
+                    icon: Icon(Icons.arrow_back, color: colors.onSurface),
                     onPressed: () => Navigator.of(context).maybePop(),
                   ),
-                  const Text(
+                  Text(
                     'Ajouter une photo',
                     style: TextStyle(
                       fontSize: 18,
                       fontWeight: FontWeight.w700,
-                      color: Colors.black,
+                      color: colors.onSurface,
                     ),
                   ),
                 ],
@@ -166,7 +166,7 @@ class _TaskUploadImgScreenState extends State<TaskUploadImgScreen> {
                       Container(
                         padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
                         decoration: BoxDecoration(
-                          color: const Color(0xFFF5F5F5),
+                          color: colors.surfaceContainerHighest,
                           borderRadius: BorderRadius.circular(10),
                         ),
                         child: Row(
@@ -177,23 +177,23 @@ class _TaskUploadImgScreenState extends State<TaskUploadImgScreen> {
                                 children: [
                                   Text(
                                     _fileName!,
-                                    style: const TextStyle(
+                                    style: TextStyle(
                                       fontSize: 13,
                                       fontWeight: FontWeight.w600,
-                                      color: Colors.black87,
+                                      color: colors.onSurface,
                                     ),
                                   ),
                                   const SizedBox(height: 2),
                                   Text(
                                     _fileSize ?? '',
-                                    style: TextStyle(color: Colors.grey.shade500, fontSize: 12),
+                                    style: TextStyle(color: colors.onSurfaceVariant, fontSize: 12),
                                   ),
                                 ],
                               ),
                             ),
                             GestureDetector(
                               onTap: _removeSelection,
-                              child: Icon(Icons.close, size: 18, color: Colors.grey.shade600),
+                              child: Icon(Icons.close, size: 18, color: colors.onSurfaceVariant),
                             ),
                           ],
                         ),
@@ -205,7 +205,7 @@ class _TaskUploadImgScreenState extends State<TaskUploadImgScreen> {
                         decoration: InputDecoration(
                           hintText: 'Ajouter une description (facultatif)...',
                           filled: true,
-                          fillColor: const Color(0xFFF5F5F5),
+                          fillColor: colors.surfaceContainerHighest,
                           border: OutlineInputBorder(
                             borderRadius: BorderRadius.circular(10),
                             borderSide: BorderSide.none,
@@ -227,7 +227,7 @@ class _TaskUploadImgScreenState extends State<TaskUploadImgScreen> {
                   onPressed: _previewBytes != null ? _sendPhoto : null,
                   style: ElevatedButton.styleFrom(
                     backgroundColor: _adaiOrange,
-                    disabledBackgroundColor: Colors.grey.shade300,
+                    disabledBackgroundColor: colors.outlineVariant,
                     foregroundColor: Colors.white,
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(8),
@@ -260,22 +260,23 @@ class _PickOptionCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final colors = Theme.of(context).colorScheme;
     return InkWell(
       onTap: onTap,
       borderRadius: BorderRadius.circular(12),
       child: Container(
         padding: const EdgeInsets.symmetric(vertical: 20),
         decoration: BoxDecoration(
-          border: Border.all(color: Colors.grey.shade300),
+          border: Border.all(color: colors.outlineVariant),
           borderRadius: BorderRadius.circular(12),
         ),
         child: Column(
           children: [
-            Icon(icon, size: 26, color: Colors.black87),
+            Icon(icon, size: 26, color: colors.onSurface),
             const SizedBox(height: 8),
             Text(
               label,
-              style: const TextStyle(fontSize: 13, color: Colors.black87),
+              style: TextStyle(fontSize: 13, color: colors.onSurface),
             ),
           ],
         ),

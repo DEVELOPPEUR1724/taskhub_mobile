@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../../services/profil_service.dart';
 
-const _adaiOrange = Color(0xFFB5651D);
+const _adaiOrange = Color(0xFFE57A44);
 final _profilService = ProfilService();
 
 class SecurityScreen extends StatefulWidget {
@@ -29,7 +29,7 @@ class _SecurityScreenState extends State<SecurityScreen> {
   Future<void> _submit() async {
     if (_passwordController.text != _passwordConfirmController.text) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Les mots de passe ne correspondent pas.'), backgroundColor: Colors.red),
+        const SnackBar(content: Text('Les mots de passe ne correspondent pas.'), backgroundColor: Color(0xFFFF453A)),
       );
       return;
     }
@@ -43,14 +43,14 @@ class _SecurityScreenState extends State<SecurityScreen> {
       );
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Mot de passe mis à jour.'), backgroundColor: Color(0xFF3A9B54)),
+        const SnackBar(content: Text('Mot de passe mis à jour.'), backgroundColor: Color(0xFF32D74B)),
       );
       Navigator.of(context).maybePop();
     } catch (e) {
       if (!mounted) return;
       setState(() => _isSaving = false);
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(e.toString().replaceFirst('Exception: ', '')), backgroundColor: Colors.red),
+        SnackBar(content: Text(e.toString().replaceFirst('Exception: ', '')), backgroundColor: const Color(0xFFFF453A)),
       );
     }
   }
@@ -58,12 +58,8 @@ class _SecurityScreenState extends State<SecurityScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Colors.white,
       appBar: AppBar(
-        backgroundColor: Colors.white,
-        elevation: 0,
-        iconTheme: const IconThemeData(color: Colors.black87),
-        title: const Text('Sécurité', style: TextStyle(color: Colors.black, fontWeight: FontWeight.w700, fontSize: 16)),
+        title: const Text('Sécurité', style: TextStyle(fontWeight: FontWeight.w700, fontSize: 16)),
       ),
       body: SafeArea(
         child: ListView(
@@ -114,7 +110,7 @@ class _PasswordField extends StatelessWidget {
           obscureText: true,
           decoration: InputDecoration(
             filled: true,
-            fillColor: const Color(0xFFF5F5F5),
+            fillColor: Theme.of(context).colorScheme.surfaceContainerHighest,
             border: OutlineInputBorder(borderRadius: BorderRadius.circular(10), borderSide: BorderSide.none),
             contentPadding: const EdgeInsets.all(14),
           ),
