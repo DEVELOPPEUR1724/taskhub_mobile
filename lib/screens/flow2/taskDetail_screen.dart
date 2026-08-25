@@ -1,11 +1,11 @@
 import 'package:flutter/material.dart';
 
 import 'taskComment_screen.dart';
+import 'taskHistorique_screen.dart';
 import '../../services/task_service.dart';
 import '../../models/task.dart' as api;
 
 const _adaiOrange = Color(0xFFB5651D);
-const _adaiBrown = Color(0xFF3E2B1F);
 
 class ChecklistItem {
   final String label;
@@ -26,6 +26,7 @@ class TaskDetailScreen extends StatefulWidget {
 class _TaskDetailScreenState extends State<TaskDetailScreen> {
   bool _descriptionExpanded = true;
   bool _isLoading = true;
+  bool _isActionLoading = false;
   String? _errorMessage;
   api.Task? _task;
 
@@ -59,6 +60,24 @@ class _TaskDetailScreenState extends State<TaskDetailScreen> {
     }
   }
 
+  Future<void> _runAction(Future<void> Function() action) async {
+    setState(() => _isActionLoading = true);
+    try {
+      await action();
+      await _loadDetailsTasks();
+    } catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(e.toString().replaceFirst('Exception: ', '')),
+          backgroundColor: Colors.red,
+        ),
+      );
+    } finally {
+      if (mounted) setState(() => _isActionLoading = false);
+    }
+  }
+
   final List<ChecklistItem> _checklist = [
     ChecklistItem(label: 'Créer la vue UI', done: true),
     ChecklistItem(label: 'Intégrer les champs email & mot de passe', done: true),
@@ -68,6 +87,23 @@ class _TaskDetailScreenState extends State<TaskDetailScreen> {
   ];
 
   int get _doneCount => _checklist.where((item) => item.done).length;
+
+  ({String label, Color bg, Color fg}) get _statusStyle {
+    switch (_task?.status) {
+      case 'todo':
+        return (label: 'À faire', bg: const Color(0xFFE3F0FB), fg: const Color(0xFF2E7CD6));
+      case 'in_progress':
+        return (label: 'En cours', bg: const Color(0xFFE5F5E9), fg: const Color(0xFF3A9B54));
+      case 'blocked':
+        return (label: 'Bloqué', bg: const Color(0xFFFCE4E4), fg: const Color(0xFFE05B33));
+      case 'to_test':
+        return (label: 'À tester', bg: const Color(0xFFFDF0DE), fg: _adaiOrange);
+      case 'done':
+        return (label: 'Terminé', bg: Colors.grey.shade200, fg: Colors.grey.shade700);
+      default:
+        return (label: _task?.status ?? '-', bg: Colors.grey.shade200, fg: Colors.grey.shade700);
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -79,10 +115,22 @@ class _TaskDetailScreenState extends State<TaskDetailScreen> {
             Padding(
               padding: const EdgeInsets.fromLTRB(8, 8, 8, 0),
               child: Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
                   IconButton(
                     icon: const Icon(Icons.arrow_back, color: Colors.black87),
                     onPressed: () => Navigator.of(context).maybePop(),
+                  ),
+                  IconButton(
+                    icon: Icon(Icons.history, color: Colors.grey.shade700),
+                    tooltip: 'Historique de suivi',
+                    onPressed: () {
+                      Navigator.of(context).push(
+                        MaterialPageRoute(
+                          builder: (context) => TaskHistoriqueScreen(taskId: widget.taskId),
+                        ),
+                      );
+                    },
                   ),
                 ],
               ),
@@ -134,13 +182,13 @@ class _TaskDetailScreenState extends State<TaskDetailScreen> {
                         Container(
                           padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
                           decoration: BoxDecoration(
-                            color: const Color(0xFFE3F0FB),
+                            color: _statusStyle.bg,
                             borderRadius: BorderRadius.circular(20),
                           ),
                           child: Text(
-                            _task!.status,
-                            style: const TextStyle(
-                              color: Color(0xFF2E7CD6),
+                            _statusStyle.label,
+                            style: TextStyle(
+                              color: _statusStyle.fg,
                               fontSize: 12,
                               fontWeight: FontWeight.w600,
                             ),
@@ -159,6 +207,24 @@ class _TaskDetailScreenState extends State<TaskDetailScreen> {
                         ),
                       ],
                     ),
+                    if (_task!.trackingDuration != null) ...[
+                      const SizedBox(height: 10),
+                      Row(
+                        children: [
+                          Icon(
+                            _task!.trackingPaused == true ? Icons.pause_circle_outline : Icons.timer_outlined,
+                            size: 15,
+                            color: Colors.grey.shade600,
+                          ),
+                          const SizedBox(width: 6),
+                          Text(
+                            'Temps de suivi : ${_task!.trackingDuration}'
+                            '${_task!.trackingPaused == true ? ' (en pause)' : ''}',
+                            style: TextStyle(color: Colors.grey.shade600, fontSize: 12.5),
+                          ),
+                        ],
+                      ),
+                    ],
                     const SizedBox(height: 20),
 
                     Container(
@@ -193,6 +259,13 @@ class _TaskDetailScreenState extends State<TaskDetailScreen> {
                             label: 'Assigné à',
                             value: _task!.assignedToName ?? 'Utilisateur #${_task!.assignedToId}',
                           ),
+                          if (_task!.createdByName != null) ...[
+                            Divider(height: 1, color: Colors.grey.shade100),
+                            _InfoRow(
+                              label: 'Créée par',
+                              value: _task!.createdByName!,
+                            ),
+                          ],
                         ],
                       ),
                     ),
@@ -273,57 +346,124 @@ class _TaskDetailScreenState extends State<TaskDetailScreen> {
           ],
         ),
       ),
-      bottomNavigationBar: Padding(
-        padding: const EdgeInsets.fromLTRB(20, 12, 20, 20),
-        child: Row(
-          children: [
-            Expanded(
-              child: SizedBox(
-                height: 48,
-                child: ElevatedButton.icon(
-                  onPressed: () {
-                    // TODO: démarrer la tâche
-                  },
-                  icon: const Icon(Icons.play_arrow, size: 20),
-                  label: const Text(
-                    'Commencer',
-                    style: TextStyle(fontSize: 15, fontWeight: FontWeight.w600),
-                  ),
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: const Color(0xFF2E7CD6),
-                    foregroundColor: Colors.white,
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(8),
+      bottomNavigationBar: _isLoading || _errorMessage != null
+          ? null
+          : Padding(
+              padding: const EdgeInsets.fromLTRB(20, 12, 20, 20),
+              child: Row(
+                children: [
+                  Expanded(child: _buildPrimaryAction()),
+                  const SizedBox(width: 12),
+                  SizedBox(
+                    width: 48,
+                    height: 48,
+                    child: OutlinedButton(
+                      onPressed: () {
+                        Navigator.of(context).push(
+                          MaterialPageRoute(
+                            builder: (context) => TaskCommentScreen(taskId: widget.taskId),
+                          ),
+                        );
+                      },
+                      style: OutlinedButton.styleFrom(
+                        padding: EdgeInsets.zero,
+                        side: BorderSide(color: Colors.grey.shade300),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(8),
+                        ),
+                      ),
+                      child: const Icon(Icons.more_horiz, color: Colors.black87),
                     ),
                   ),
-                ),
+                ],
               ),
             ),
-            const SizedBox(width: 12),
-            SizedBox(
-              width: 48,
-              height: 48,
-              child: OutlinedButton(
-                onPressed: () {
-                  Navigator.of(context).push(
-                    MaterialPageRoute(
-                      builder: (context) => TaskCommentScreen(taskId: widget.taskId),
-                    ),
-                  );
-                },
-                style: OutlinedButton.styleFrom(
-                  padding: EdgeInsets.zero,
-                  side: BorderSide(color: Colors.grey.shade300),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(8),
-                  ),
-                ),
-                child: const Icon(Icons.more_horiz, color: Colors.black87),
-              ),
-            ),
-          ],
+    );
+  }
+
+  Widget _buildPrimaryAction() {
+    final task = _task;
+    if (task == null) return const SizedBox.shrink();
+
+    ({String label, IconData icon, Color color, Future<void> Function() action})? primary;
+    switch (task.status) {
+      case 'todo':
+      case 'blocked':
+        primary = (
+          label: 'Commencer',
+          icon: Icons.play_arrow,
+          color: const Color(0xFF2E7CD6),
+          action: () => taskService.startTask(task.id),
+        );
+      case 'in_progress':
+        primary = task.trackingPaused == true
+            ? (
+                label: 'Reprendre',
+                icon: Icons.play_arrow,
+                color: const Color(0xFF3A9B54),
+                action: () => taskService.resumeTask(task.id),
+              )
+            : (
+                label: 'Mettre en pause',
+                icon: Icons.pause,
+                color: _adaiOrange,
+                action: () => taskService.pauseTask(task.id),
+              );
+      default:
+        primary = null;
+    }
+
+    if (task.status == 'done') {
+      return SizedBox(
+        height: 48,
+        child: OutlinedButton(
+          onPressed: null,
+          style: OutlinedButton.styleFrom(
+            side: BorderSide(color: Colors.grey.shade300),
+            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+          ),
+          child: const Text('Tâche terminée', style: TextStyle(fontWeight: FontWeight.w600)),
         ),
-      ),
+      );
+    }
+
+    return Row(
+      children: [
+        if (primary != null)
+          Expanded(
+            child: SizedBox(
+              height: 48,
+              child: ElevatedButton.icon(
+                onPressed: _isActionLoading ? null : () => _runAction(primary!.action),
+                icon: Icon(primary.icon, size: 20),
+                label: Text(primary.label, style: const TextStyle(fontSize: 15, fontWeight: FontWeight.w600)),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: primary.color,
+                  foregroundColor: Colors.white,
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                ),
+              ),
+            ),
+          ),
+        if (primary != null) const SizedBox(width: 10),
+        Expanded(
+          child: SizedBox(
+            height: 48,
+            child: OutlinedButton.icon(
+              onPressed: _isActionLoading ? null : () => _runAction(() => taskService.completeTask(task.id)),
+              icon: const Icon(Icons.check_circle_outline, size: 18, color: Color(0xFF3A9B54)),
+              label: const Text(
+                'Terminer',
+                style: TextStyle(color: Color(0xFF3A9B54), fontSize: 14, fontWeight: FontWeight.w600),
+              ),
+              style: OutlinedButton.styleFrom(
+                side: const BorderSide(color: Color(0xFF3A9B54)),
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+              ),
+            ),
+          ),
+        ),
+      ],
     );
   }
 }

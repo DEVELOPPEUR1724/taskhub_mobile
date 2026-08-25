@@ -9,7 +9,41 @@ final taskService = TaskService();
 const _adaiOrange = Color(0xFFB5651D);
 const _adaiBrown = Color(0xFF3E2B1F);
 
-enum TaskStatus { aFaire, enCours, aTester, termine }
+// Valeurs exactes de App\Enums\TaskStatus (backend) : todo, in_progress,
+// blocked, done, to_test.
+enum TaskStatus { aFaire, enCours, bloque, aTester, termine }
+
+String _statusToApiValue(TaskStatus status) {
+  switch (status) {
+    case TaskStatus.aFaire:
+      return 'todo';
+    case TaskStatus.enCours:
+      return 'in_progress';
+    case TaskStatus.bloque:
+      return 'blocked';
+    case TaskStatus.aTester:
+      return 'to_test';
+    case TaskStatus.termine:
+      return 'done';
+  }
+}
+
+TaskStatus _mapApiStatus(String status) {
+  switch (status) {
+    case 'todo':
+      return TaskStatus.aFaire;
+    case 'in_progress':
+      return TaskStatus.enCours;
+    case 'blocked':
+      return TaskStatus.bloque;
+    case 'to_test':
+      return TaskStatus.aTester;
+    case 'done':
+      return TaskStatus.termine;
+    default:
+      return TaskStatus.aFaire;
+  }
+}
 
 class Task {
   final int id;
@@ -50,15 +84,15 @@ class _TaskListScreenState extends State<TaskListScreen> {
   }
 
   Future<void> _loadTasks() async {
-    
     setState(() {
       _isLoading = true;
       _errorMessage = null;
     });
 
     try {
-      final apiTasks= 
-        await taskService.getAllTasks();
+      final apiTasks = await taskService.getAllTasks(
+        status: _selectedFilter != null ? _statusToApiValue(_selectedFilter!) : null,
+      );
       final uiTasks = apiTasks.map(_mapApiTaskToUiTask).toList();
 
       if (!mounted) return;
@@ -66,13 +100,18 @@ class _TaskListScreenState extends State<TaskListScreen> {
         _tasks = uiTasks;
         _isLoading = false;
       });
-    }catch(e){
+    } catch (e) {
       if (!mounted) return;
-       setState(() {
+      setState(() {
         _errorMessage = e.toString().replaceFirst('Exception: ', '');
         _isLoading = false;
       });
     }
+  }
+
+  void _onFilterChanged(TaskStatus? filter) {
+    setState(() => _selectedFilter = filter);
+    _loadTasks();
   }
 
   Task _mapApiTaskToUiTask(api.Task apiTask) {
@@ -86,33 +125,8 @@ class _TaskListScreenState extends State<TaskListScreen> {
               '${apiTask.deadline!.toLocal().year}'
           : 'Non définie',
       status: _mapApiStatus(apiTask.status),
-      avatarUrl: 'https://i.pravatar.cc/100?u=${apiTask.assignedToId}', // TODO: remplacer par le vrai avatar utilisateur
+      avatarUrl: 'https://i.pravatar.cc/100?u=${apiTask.assignedToId}',
     );
-  }
-  
-  TaskStatus _mapApiStatus(String status) {
-    // TODO: ajuster ces valeurs selon les vraies valeurs renvoyées par ton backend
-    switch (status) {
-      case 'todo':
-      case 'a_faire':
-        return TaskStatus.aFaire;
-      case 'in_progress':
-      case 'en_cours':
-        return TaskStatus.enCours;
-      case 'to_test':
-      case 'a_tester':
-        return TaskStatus.aTester;
-      case 'done':
-      case 'termine':
-        return TaskStatus.termine;
-      default:
-        return TaskStatus.aFaire;
-    }
-  }
-
-  List<Task> get _filteredTasks {
-    if (_selectedFilter == null) return _tasks;
-    return _tasks.where((t) => t.status == _selectedFilter).toList();
   }
 
   @override
@@ -120,95 +134,109 @@ class _TaskListScreenState extends State<TaskListScreen> {
     return Material(
       color: Colors.white,
       child: Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Padding(
-          padding: const EdgeInsets.fromLTRB(20, 16, 20, 8),
-          child: Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              const Text(
-                'Mes tâches',
-                style: TextStyle(
-                  fontSize: 24,
-                  fontWeight: FontWeight.bold,
-                  color: _adaiBrown,
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Padding(
+            padding: const EdgeInsets.fromLTRB(20, 16, 20, 8),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                const Text(
+                  'Mes tâches',
+                  style: TextStyle(
+                    fontSize: 24,
+                    fontWeight: FontWeight.bold,
+                    color: _adaiBrown,
+                  ),
                 ),
-              ),
-              const CircleAvatar(
-                radius: 20,
-                backgroundImage: NetworkImage(
-                  'https://dashboard-wally-process-interne.adaiexpertise.fr/logo_sans_fond.png',
+                const CircleAvatar(
+                  radius: 20,
+                  backgroundImage: NetworkImage(
+                    'https://dashboard-wally-process-interne.adaiexpertise.fr/logo_sans_fond.png',
+                  ),
+                  backgroundColor: Colors.transparent,
                 ),
-                backgroundColor: Colors.transparent,
-              ),
-            ],
+              ],
+            ),
           ),
-        ),
-        SizedBox(
-          height: 40,
-          child: ListView(
-            scrollDirection: Axis.horizontal,
-            padding: const EdgeInsets.symmetric(horizontal: 16),
-            children: [
-              _FilterChip(
-                label: 'Toutes',
-                selected: _selectedFilter == null,
-                onTap: () => setState(() => _selectedFilter = null),
-              ),
-              _FilterChip(
-                label: 'À faire',
-                selected: _selectedFilter == TaskStatus.aFaire,
-                onTap: () => setState(() => _selectedFilter = TaskStatus.aFaire),
-              ),
-              _FilterChip(
-                label: 'En cours',
-                selected: _selectedFilter == TaskStatus.enCours,
-                onTap: () => setState(() => _selectedFilter = TaskStatus.enCours),
-              ),
-              _FilterChip(
-                label: 'À tester',
-                selected: _selectedFilter == TaskStatus.aTester,
-                onTap: () => setState(() => _selectedFilter = TaskStatus.aTester),
-              ),
-            ],
-          ),
-        ),
-        const SizedBox(height: 8),
-        Expanded(
-          child: _isLoading
-          ? const Center(child: CircularProgressIndicator())
-          : _errorMessage != null
-          ? Center(
-              child: Padding(
-                padding: const EdgeInsets.all(24),
-                child: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Text(
-                      _errorMessage!,
-                      textAlign: TextAlign.center,
-                      style: TextStyle(color: Colors.grey.shade600),
-                    ),
-                    const SizedBox(height: 12),
-                    TextButton(
-                      onPressed: _loadTasks,
-                      child: const Text('Réessayer'),
-                    ),
-                  ],
+          SizedBox(
+            height: 40,
+            child: ListView(
+              scrollDirection: Axis.horizontal,
+              padding: const EdgeInsets.symmetric(horizontal: 16),
+              children: [
+                _FilterChip(
+                  label: 'Toutes',
+                  selected: _selectedFilter == null,
+                  onTap: () => _onFilterChanged(null),
                 ),
-              ),
-            )
-          :ListView.builder(
-            padding: const EdgeInsets.all(16),
-            itemCount: _filteredTasks.length,
-            itemBuilder: (context, index) {
-              return _TaskCard(task: _filteredTasks[index]);
-            },
+                _FilterChip(
+                  label: 'À faire',
+                  selected: _selectedFilter == TaskStatus.aFaire,
+                  onTap: () => _onFilterChanged(TaskStatus.aFaire),
+                ),
+                _FilterChip(
+                  label: 'En cours',
+                  selected: _selectedFilter == TaskStatus.enCours,
+                  onTap: () => _onFilterChanged(TaskStatus.enCours),
+                ),
+                _FilterChip(
+                  label: 'Bloqué',
+                  selected: _selectedFilter == TaskStatus.bloque,
+                  onTap: () => _onFilterChanged(TaskStatus.bloque),
+                ),
+                _FilterChip(
+                  label: 'À tester',
+                  selected: _selectedFilter == TaskStatus.aTester,
+                  onTap: () => _onFilterChanged(TaskStatus.aTester),
+                ),
+                _FilterChip(
+                  label: 'Terminé',
+                  selected: _selectedFilter == TaskStatus.termine,
+                  onTap: () => _onFilterChanged(TaskStatus.termine),
+                ),
+              ],
+            ),
           ),
-        ),
-      ],
-    )
+          const SizedBox(height: 8),
+          Expanded(
+            child: _isLoading
+                ? const Center(child: CircularProgressIndicator())
+                : _errorMessage != null
+                    ? Center(
+                        child: Padding(
+                          padding: const EdgeInsets.all(24),
+                          child: Column(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              Text(
+                                _errorMessage!,
+                                textAlign: TextAlign.center,
+                                style: TextStyle(color: Colors.grey.shade600),
+                              ),
+                              const SizedBox(height: 12),
+                              TextButton(
+                                onPressed: _loadTasks,
+                                child: const Text('Réessayer'),
+                              ),
+                            ],
+                          ),
+                        ),
+                      )
+                    : _tasks.isEmpty
+                        ? Center(
+                            child: Text('Aucune tâche', style: TextStyle(color: Colors.grey.shade600)),
+                          )
+                        : ListView.builder(
+                            padding: const EdgeInsets.all(16),
+                            itemCount: _tasks.length,
+                            itemBuilder: (context, index) {
+                              return _TaskCard(task: _tasks[index]);
+                            },
+                          ),
+          ),
+        ],
+      ),
     );
   }
 }
@@ -259,6 +287,8 @@ class _TaskCard extends StatelessWidget {
         return (label: 'À faire', bg: const Color(0xFFE3F0FB), fg: const Color(0xFF2E7CD6));
       case TaskStatus.enCours:
         return (label: 'En cours', bg: const Color(0xFFE5F5E9), fg: const Color(0xFF3A9B54));
+      case TaskStatus.bloque:
+        return (label: 'Bloqué', bg: const Color(0xFFFCE4E4), fg: const Color(0xFFE05B33));
       case TaskStatus.aTester:
         return (label: 'À tester', bg: const Color(0xFFFDF0DE), fg: _adaiOrange);
       case TaskStatus.termine:
