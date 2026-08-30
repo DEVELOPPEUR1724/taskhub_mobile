@@ -385,12 +385,26 @@ class _SearchHitTile extends StatelessWidget {
                   Row(
                     children: [
                       Expanded(
-                        child: Text(
-                          hit.conversationName != null ? hit.conversationName! : hit.senderName,
-                          maxLines: 1,
-                          overflow: TextOverflow.ellipsis,
-                          style: TextStyle(fontWeight: FontWeight.w700, fontSize: 14, color: colors.onSurface),
-                        ),
+                        // Le titre est le nom de la conversation (mode global) —
+                        // il ne matche jamais la recherche (qui porte sur le
+                        // corps du message ou le nom de l'EXPÉDITEUR), donc pas
+                        // besoin de le surligner. En mode "dans la conversation",
+                        // c'est le nom de l'expéditeur qui est affiché ici et qui
+                        // peut matcher : on le surligne dans ce cas.
+                        child: hit.conversationName != null
+                            ? Text(
+                                hit.conversationName!,
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
+                                style: TextStyle(fontWeight: FontWeight.w700, fontSize: 14, color: colors.onSurface),
+                              )
+                            : _HighlightedSnippet(
+                                text: hit.senderName,
+                                query: query,
+                                colors: colors,
+                                baseStyle: TextStyle(fontWeight: FontWeight.w700, fontSize: 14, color: colors.onSurface),
+                                maxLines: 1,
+                              ),
                       ),
                       const SizedBox(width: 8),
                       Text(
@@ -401,11 +415,12 @@ class _SearchHitTile extends StatelessWidget {
                   ),
                   const SizedBox(height: 2),
                   if (hit.conversationName != null)
-                    Text(
-                      hit.senderName,
+                    _HighlightedSnippet(
+                      text: hit.senderName,
+                      query: query,
+                      colors: colors,
+                      baseStyle: TextStyle(color: colors.onSurfaceVariant, fontSize: 12),
                       maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                      style: TextStyle(color: colors.onSurfaceVariant, fontSize: 12),
                     ),
                   const SizedBox(height: 2),
                   _HighlightedSnippet(text: hit.body, query: query, colors: colors),
@@ -426,20 +441,28 @@ class _HighlightedSnippet extends StatelessWidget {
   final String text;
   final String query;
   final ColorScheme colors;
+  final TextStyle? baseStyle;
+  final int maxLines;
 
-  const _HighlightedSnippet({required this.text, required this.query, required this.colors});
+  const _HighlightedSnippet({
+    required this.text,
+    required this.query,
+    required this.colors,
+    this.baseStyle,
+    this.maxLines = 2,
+  });
 
   @override
   Widget build(BuildContext context) {
-    final baseStyle = TextStyle(color: colors.onSurfaceVariant, fontSize: 13, height: 1.3);
-    final matchStyle = TextStyle(color: _adaiOrange, fontWeight: FontWeight.w700, fontSize: 13, height: 1.3);
+    final style = baseStyle ?? TextStyle(color: colors.onSurfaceVariant, fontSize: 13, height: 1.3);
+    final matchStyle = style.copyWith(color: _adaiOrange, fontWeight: FontWeight.w700);
 
     final lowerText = text.toLowerCase();
     final lowerQuery = query.toLowerCase();
     final matchIndex = lowerQuery.isEmpty ? -1 : lowerText.indexOf(lowerQuery);
 
     if (matchIndex == -1) {
-      return Text(text, maxLines: 2, overflow: TextOverflow.ellipsis, style: baseStyle);
+      return Text(text, maxLines: maxLines, overflow: TextOverflow.ellipsis, style: style);
     }
 
     // Recadre l'extrait autour du terme trouvé plutôt que de toujours partir
@@ -463,9 +486,9 @@ class _HighlightedSnippet extends StatelessWidget {
           TextSpan(text: '$after$suffix'),
         ],
       ),
-      maxLines: 2,
+      maxLines: maxLines,
       overflow: TextOverflow.ellipsis,
-      style: baseStyle,
+      style: style,
     );
   }
 }
