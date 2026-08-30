@@ -144,11 +144,17 @@ class ChatService {
     }
   }
 
-  Future<List<Message>> getMessages(int conversationId) async {
+  // page 1 = messages les plus récents (le backend trie désormais par
+  // created_at décroissant) ; pages suivantes = messages plus anciens, au
+  // fil du défilement vers le haut de l'écran de conversation.
+  Future<MessagePage> getMessages(int conversationId, {int page = 1}) async {
     final token = await _requireToken();
 
+    final uri = Uri.parse("${ClientService.baseUrl}/conversations/$conversationId/messages").replace(
+      queryParameters: {'page': page.toString()},
+    );
     final response = await http.get(
-      Uri.parse("${ClientService.baseUrl}/conversations/$conversationId/messages"),
+      uri,
       headers: {
         "Accept": "application/json",
         "Content-Type": "application/json",
@@ -159,7 +165,73 @@ class ChatService {
     if (response.statusCode == 200) {
       final Map<String, dynamic> json = jsonDecode(response.body);
       final List<dynamic> data = json['data'];
-      return data.map((e) => Message.fromJson(e)).toList();
+      return MessagePage(
+        messages: data.map((e) => Message.fromJson(e)).toList(),
+        currentPage: json['current_page'],
+        lastPage: json['last_page'],
+      );
+    } else {
+      final error = jsonDecode(response.body);
+      throw Exception(error['message']);
+    }
+  }
+
+  // Recherche de messages dans une conversation précise (même forme de
+  // réponse que getMessages, juste filtrée par "q").
+  Future<MessagePage> searchMessages(int conversationId, String query, {int page = 1}) async {
+    final token = await _requireToken();
+
+    final uri = Uri.parse("${ClientService.baseUrl}/conversations/$conversationId/messages/search").replace(
+      queryParameters: {'q': query, 'page': page.toString()},
+    );
+    final response = await http.get(
+      uri,
+      headers: {
+        "Accept": "application/json",
+        "Content-Type": "application/json",
+        "Authorization": "Bearer $token",
+      },
+    );
+
+    if (response.statusCode == 200) {
+      final Map<String, dynamic> json = jsonDecode(response.body);
+      final List<dynamic> data = json['data'];
+      return MessagePage(
+        messages: data.map((e) => Message.fromJson(e)).toList(),
+        currentPage: json['current_page'],
+        lastPage: json['last_page'],
+      );
+    } else {
+      final error = jsonDecode(response.body);
+      throw Exception(error['message']);
+    }
+  }
+
+  // Recherche transversale, dans toutes les conversations dont l'utilisateur
+  // est membre.
+  Future<MessageSearchPage> searchAllMessages(String query, {int page = 1}) async {
+    final token = await _requireToken();
+
+    final uri = Uri.parse("${ClientService.baseUrl}/messages/search").replace(
+      queryParameters: {'q': query, 'page': page.toString()},
+    );
+    final response = await http.get(
+      uri,
+      headers: {
+        "Accept": "application/json",
+        "Content-Type": "application/json",
+        "Authorization": "Bearer $token",
+      },
+    );
+
+    if (response.statusCode == 200) {
+      final Map<String, dynamic> json = jsonDecode(response.body);
+      final List<dynamic> data = json['data'];
+      return MessageSearchPage(
+        results: data.map((e) => MessageSearchResult.fromJson(e)).toList(),
+        currentPage: json['current_page'],
+        lastPage: json['last_page'],
+      );
     } else {
       final error = jsonDecode(response.body);
       throw Exception(error['message']);

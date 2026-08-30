@@ -83,3 +83,67 @@ class Message {
     return name.substring(dotIndex + 1).toLowerCase();
   }
 }
+
+// Une page de résultats de GET /conversations/{id}/messages (pagination
+// Laravel). messages est trié du plus récent au plus ancien (voir
+// ChatController::getMessages).
+class MessagePage {
+  final List<Message> messages;
+  final int currentPage;
+  final int lastPage;
+
+  MessagePage({
+    required this.messages,
+    required this.currentPage,
+    required this.lastPage,
+  });
+
+  bool get hasMore => currentPage < lastPage;
+}
+
+// Résultat de recherche transversale (GET /messages/search) — forme
+// personnalisée renvoyée par le backend (ChatController::searchAllMessages),
+// pas un Message complet : pas de pièce jointe, mais on connaît la
+// conversation d'origine puisque la recherche porte sur plusieurs à la fois.
+class MessageSearchResult {
+  final int id;
+  final String? body;
+  final DateTime createdAt;
+  final MessageUser? user;
+  final int conversationId;
+  final String conversationName;
+
+  MessageSearchResult({
+    required this.id,
+    this.body,
+    required this.createdAt,
+    this.user,
+    required this.conversationId,
+    required this.conversationName,
+  });
+
+  factory MessageSearchResult.fromJson(Map<String, dynamic> json) {
+    return MessageSearchResult(
+      id: json['id'],
+      body: json['body'],
+      createdAt: DateTime.parse(json['created_at']),
+      user: json['user'] != null ? MessageUser.fromJson(json['user']) : null,
+      conversationId: json['conversation_id'],
+      conversationName: json['conversation_name'] ?? 'Conversation',
+    );
+  }
+}
+
+class MessageSearchPage {
+  final List<MessageSearchResult> results;
+  final int currentPage;
+  final int lastPage;
+
+  MessageSearchPage({
+    required this.results,
+    required this.currentPage,
+    required this.lastPage,
+  });
+
+  bool get hasMore => currentPage < lastPage;
+}

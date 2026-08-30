@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 
 import 'conversation_screen.dart';
 import 'createConversation_screen.dart';
+import 'messageSearch_screen.dart';
 import '../../services/chat_service.dart';
 import '../../models/conversation.dart' as api;
 
@@ -176,6 +177,34 @@ class _ConversationListScreenState extends State<ConversationListScreen> {
             child: Text(
               'Discussions par projet',
               style: TextStyle(color: colors.onSurfaceVariant, fontSize: 13),
+            ),
+          ),
+          Padding(
+            padding: const EdgeInsets.fromLTRB(20, 0, 20, 8),
+            child: GestureDetector(
+              onTap: () {
+                Navigator.of(context).push(
+                  MaterialPageRoute(builder: (context) => const MessageSearchScreen()),
+                );
+              },
+              child: Container(
+                height: 42,
+                padding: const EdgeInsets.symmetric(horizontal: 14),
+                decoration: BoxDecoration(
+                  color: colors.surfaceContainerHighest,
+                  borderRadius: BorderRadius.circular(21),
+                ),
+                child: Row(
+                  children: [
+                    Icon(Icons.search, size: 20, color: colors.onSurfaceVariant),
+                    const SizedBox(width: 8),
+                    Text(
+                      'Rechercher dans les messages',
+                      style: TextStyle(color: colors.onSurfaceVariant, fontSize: 14),
+                    ),
+                  ],
+                ),
+              ),
             ),
           ),
           Expanded(

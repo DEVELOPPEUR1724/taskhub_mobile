@@ -6,6 +6,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 import 'conversationInfo_screen.dart';
+import 'messageSearch_screen.dart';
 import '../flow2/imageViewer_screen.dart';
 import '../flow2/taskUploadImg_screen.dart';
 import '../../services/chat_service.dart';
@@ -62,11 +63,19 @@ class ConversationScreen extends StatefulWidget {
 
 class _ConversationScreenState extends State<ConversationScreen> {
   final _messageController = TextEditingController();
+  final _scrollController = ScrollController();
 
+  // _messages est trié du plus récent (index 0) au plus ancien, pour être
+  // affiché dans une ListView "reverse: true" — voir _loadMessages.
   List<ChatMessage> _messages = [];
   bool _isLoading = true;
   String? _errorMessage;
   int? _currentUserId;
+
+  int _currentPage = 1;
+  int _lastPage = 1;
+  bool _isLoadingMore = false;
+  bool get _hasMoreMessages => _currentPage < _lastPage;
 
   api.Conversation? _conversation;
   List<api.ConversationMember> _members = [];
@@ -74,7 +83,19 @@ class _ConversationScreenState extends State<ConversationScreen> {
   @override
   void initState() {
     super.initState();
+    _scrollController.addListener(_onScroll);
     _init();
+  }
+
+  // ListView est "reverse: true" (les plus récents en bas, comme un chat
+  // classique) : défiler "vers le haut" pour remonter dans l'historique
+  // revient donc à se rapprocher de maxScrollExtent, pas de 0.
+  void _onScroll() {
+    if (!_scrollController.hasClients) return;
+    final position = _scrollController.position;
+    if (position.pixels >= position.maxScrollExtent - 200) {
+      _loadMoreMessages();
+    }
   }
 
   Future<void> _init() async {
@@ -104,7 +125,7 @@ class _ConversationScreenState extends State<ConversationScreen> {
     // quand Reverb le renvoie aussi à l'expéditeur.
     if (_messages.any((m) => m.id == id)) return;
     setState(() {
-      _messages.add(_mapApiMessageToUiMessage(message));
+      _messages.insert(0, _mapApiMessageToUiMessage(message));
     });
   }
 
@@ -155,11 +176,13 @@ class _ConversationScreenState extends State<ConversationScreen> {
     });
 
     try {
-      final apiMessages = await chatService.getMessages(widget.conversationId!);
-      final uiMessages = apiMessages.map(_mapApiMessageToUiMessage).toList();
+      final page = await chatService.getMessages(widget.conversationId!, page: 1);
+      final uiMessages = page.messages.map(_mapApiMessageToUiMessage).toList();
       if (!mounted) return;
       setState(() {
         _messages = uiMessages;
+        _currentPage = page.currentPage;
+        _lastPage = page.lastPage;
         _isLoading = false;
       });
       // Marque la conversation comme lue une fois les messages affichés.
@@ -171,6 +194,30 @@ class _ConversationScreenState extends State<ConversationScreen> {
         _isLoading = false;
         _errorMessage = 'Erreur lors du chargement des messages';
       });
+    }
+  }
+
+  // Charge les messages plus anciens (page suivante) quand l'utilisateur
+  // remonte en haut de l'historique, et les ajoute à la fin de _messages
+  // (qui va du plus récent au plus ancien).
+  Future<void> _loadMoreMessages() async {
+    if (_isLoadingMore || !_hasMoreMessages || widget.conversationId == null) return;
+
+    setState(() => _isLoadingMore = true);
+    try {
+      final page = await chatService.getMessages(widget.conversationId!, page: _currentPage + 1);
+      if (!mounted) return;
+      setState(() {
+        _messages.addAll(page.messages.map(_mapApiMessageToUiMessage));
+        _currentPage = page.currentPage;
+        _lastPage = page.lastPage;
+        _isLoadingMore = false;
+      });
+    } catch (_) {
+      if (!mounted) return;
+      // Erreur silencieuse : l'utilisateur peut simplement re-défiler pour
+      // retenter, pas besoin de bloquer l'écran avec un message d'erreur.
+      setState(() => _isLoadingMore = false);
     }
   }
 
@@ -199,6 +246,8 @@ class _ConversationScreenState extends State<ConversationScreen> {
     if (widget.conversationId != null) {
       RealtimeChatService.instance.unsubscribeFromConversation(widget.conversationId!);
     }
+    _scrollController.removeListener(_onScroll);
+    _scrollController.dispose();
     _messageController.dispose();
     super.dispose();
   }
@@ -211,7 +260,7 @@ class _ConversationScreenState extends State<ConversationScreen> {
       final apiMessage = await chatService.sendMessages(widget.conversationId!, body: text);
       if (!mounted) return;
       setState(() {
-        _messages.add(_mapApiMessageToUiMessage(apiMessage));
+        _messages.insert(0, _mapApiMessageToUiMessage(apiMessage));
       });
       _messageController.clear();
     } catch (e) {
@@ -237,7 +286,7 @@ class _ConversationScreenState extends State<ConversationScreen> {
       );
       if (!mounted) return;
       setState(() {
-        _messages.add(_mapApiMessageToUiMessage(apiMessage));
+        _messages.insert(0, _mapApiMessageToUiMessage(apiMessage));
       });
     } catch (e) {
       if (!mounted) return;
@@ -294,6 +343,21 @@ class _ConversationScreenState extends State<ConversationScreen> {
               ),
             ),
           IconButton(
+            icon: Icon(Icons.search, color: colors.onSurface),
+            onPressed: widget.conversationId == null
+                ? null
+                : () {
+                    Navigator.of(context).push(
+                      MaterialPageRoute(
+                        builder: (context) => MessageSearchScreen(
+                          conversationId: widget.conversationId!,
+                          conversationName: _headerTitle,
+                        ),
+                      ),
+                    );
+                  },
+          ),
+          IconButton(
             icon: Icon(Icons.more_vert, color: colors.onSurface),
             onPressed: widget.conversationId == null
                 ? null
@@ -345,9 +409,25 @@ class _ConversationScreenState extends State<ConversationScreen> {
                               ),
                             )
                           : ListView.builder(
+                              controller: _scrollController,
+                              reverse: true,
                               padding: const EdgeInsets.all(16),
-                              itemCount: _messages.length,
-                              itemBuilder: (context, index) => _MessageBubble(message: _messages[index]),
+                              itemCount: _messages.length + (_isLoadingMore ? 1 : 0),
+                              itemBuilder: (context, index) {
+                                if (index >= _messages.length) {
+                                  return const Padding(
+                                    padding: EdgeInsets.symmetric(vertical: 12),
+                                    child: Center(
+                                      child: SizedBox(
+                                        width: 20,
+                                        height: 20,
+                                        child: CircularProgressIndicator(strokeWidth: 2),
+                                      ),
+                                    ),
+                                  );
+                                }
+                                return _MessageBubble(message: _messages[index]);
+                              },
                             ),
             ),
             _MessageInputBar(
