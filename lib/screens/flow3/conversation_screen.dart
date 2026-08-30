@@ -9,6 +9,7 @@ import 'conversationInfo_screen.dart';
 import '../flow2/imageViewer_screen.dart';
 import '../flow2/taskUploadImg_screen.dart';
 import '../../services/chat_service.dart';
+import '../../services/realtime_chat_service.dart';
 import '../../models/message.dart' as api;
 import '../../models/conversation.dart' as api;
 import '../../utils/file_icon.dart';
@@ -83,6 +84,28 @@ class _ConversationScreenState extends State<ConversationScreen> {
     // utilisable — juste sans le vrai titre/avatars dans l'en-tête.
     _loadConversationDetails();
     await _loadMessages();
+    await _subscribeToRealtime();
+  }
+
+  Future<void> _subscribeToRealtime() async {
+    if (widget.conversationId == null) return;
+    await RealtimeChatService.instance.init();
+    await RealtimeChatService.instance.subscribeToConversation(
+      widget.conversationId!,
+      _handleIncomingMessage,
+    );
+  }
+
+  void _handleIncomingMessage(api.Message message) {
+    if (!mounted) return;
+    final id = message.id.toString();
+    // Le message qu'on vient d'envoyer soi-même est déjà affiché de façon
+    // optimiste (voir _sendMessage/_sendImageMessage) — évite le doublon
+    // quand Reverb le renvoie aussi à l'expéditeur.
+    if (_messages.any((m) => m.id == id)) return;
+    setState(() {
+      _messages.add(_mapApiMessageToUiMessage(message));
+    });
   }
 
   Future<void> _loadConversationDetails() async {
@@ -173,6 +196,9 @@ class _ConversationScreenState extends State<ConversationScreen> {
 
   @override
   void dispose() {
+    if (widget.conversationId != null) {
+      RealtimeChatService.instance.unsubscribeFromConversation(widget.conversationId!);
+    }
     _messageController.dispose();
     super.dispose();
   }
