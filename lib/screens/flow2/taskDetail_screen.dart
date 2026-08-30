@@ -3,6 +3,8 @@ import 'package:flutter/material.dart';
 import 'taskComment_screen.dart';
 import 'taskHistorique_screen.dart';
 import '../../services/task_service.dart';
+import '../../services/app_database.dart';
+import '../../services/sync_service.dart';
 import '../../models/task.dart' as api;
 import '../../theme/app_colors.dart';
 
@@ -53,19 +55,34 @@ class _TaskDetailScreenState extends State<TaskDetailScreen> {
         _isLoading = false;
       });
     } catch (e) {
+      // Hors ligne / erreur réseau : on retombe sur le cache local avant
+      // d'afficher une vraie erreur (indisponible sur Flutter Web, où
+      // sqflite n'existe pas).
+      api.Task? cached;
+      try {
+        cached = await AppDatabase.instance.getCachedTask(widget.taskId);
+      } catch (_) {}
       if (!mounted) return;
-      setState(() {
-        _errorMessage = e.toString().replaceFirst('Exception: ', '');
-        _isLoading = false;
-      });
+      if (cached != null) {
+        setState(() {
+          _task = cached;
+          _isLoading = false;
+        });
+      } else {
+        setState(() {
+          _errorMessage = e.toString().replaceFirst('Exception: ', '');
+          _isLoading = false;
+        });
+      }
     }
   }
 
-  Future<void> _runAction(Future<void> Function() action) async {
+  Future<void> _runAction(Future<api.Task> Function() action) async {
     setState(() => _isActionLoading = true);
     try {
-      await action();
-      await _loadDetailsTasks();
+      final updated = await action();
+      if (!mounted) return;
+      setState(() => _task = updated);
     } catch (e) {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
@@ -386,7 +403,7 @@ class _TaskDetailScreenState extends State<TaskDetailScreen> {
     final task = _task;
     if (task == null) return const SizedBox.shrink();
 
-    ({String label, IconData icon, Color color, Future<void> Function() action})? primary;
+    ({String label, IconData icon, Color color, Future<api.Task> Function() action})? primary;
     switch (task.status) {
       case 'todo':
       case 'blocked':
@@ -394,7 +411,7 @@ class _TaskDetailScreenState extends State<TaskDetailScreen> {
           label: 'Commencer',
           icon: Icons.play_arrow,
           color: const Color(0xFF0A84FF),
-          action: () => taskService.startTask(task.id),
+          action: () => SyncService.instance.queueStartTask(task),
         );
       case 'in_progress':
         primary = task.trackingPaused == true
@@ -402,13 +419,13 @@ class _TaskDetailScreenState extends State<TaskDetailScreen> {
                 label: 'Reprendre',
                 icon: Icons.play_arrow,
                 color: const Color(0xFF32D74B),
-                action: () => taskService.resumeTask(task.id),
+                action: () => SyncService.instance.queueResumeTask(task),
               )
             : (
                 label: 'Mettre en pause',
                 icon: Icons.pause,
                 color: _adaiOrange,
-                action: () => taskService.pauseTask(task.id),
+                action: () => SyncService.instance.queuePauseTask(task),
               );
       default:
         primary = null;
@@ -451,7 +468,7 @@ class _TaskDetailScreenState extends State<TaskDetailScreen> {
           child: SizedBox(
             height: 48,
             child: OutlinedButton.icon(
-              onPressed: _isActionLoading ? null : () => _runAction(() => taskService.completeTask(task.id)),
+              onPressed: _isActionLoading ? null : () => _runAction(() => SyncService.instance.queueCompleteTask(task)),
               icon: const Icon(Icons.check_circle_outline, size: 18, color: Color(0xFF32D74B)),
               label: const Text(
                 'Terminer',

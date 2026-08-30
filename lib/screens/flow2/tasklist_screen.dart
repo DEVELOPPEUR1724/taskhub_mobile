@@ -1,6 +1,11 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 
 import '../../models/task.dart' as api;
+import '../../services/app_database.dart';
+import '../../services/connectivity_service.dart';
+import '../../services/sync_service.dart';
 import '../../services/task_service.dart';
 import '../../theme/app_colors.dart';
 import 'taskDetail_screen.dart';
@@ -94,6 +99,7 @@ class _TaskListScreenState extends State<TaskListScreen> {
       final apiTasks = await taskService.getAllTasks(
         status: _selectedFilter != null ? _statusToApiValue(_selectedFilter!) : null,
       );
+      unawaited(AppDatabase.instance.upsertTasks(apiTasks));
       final uiTasks = apiTasks.map(_mapApiTaskToUiTask).toList();
 
       if (!mounted) return;
@@ -102,11 +108,26 @@ class _TaskListScreenState extends State<TaskListScreen> {
         _isLoading = false;
       });
     } catch (e) {
+      // Hors ligne / erreur réseau : on retombe sur le cache local (si
+      // disponible — pas le cas sur Flutter Web, où sqflite n'existe pas).
+      List<api.Task> cached = [];
+      try {
+        cached = await AppDatabase.instance.getCachedTasks(
+          status: _selectedFilter != null ? _statusToApiValue(_selectedFilter!) : null,
+        );
+      } catch (_) {}
       if (!mounted) return;
-      setState(() {
-        _errorMessage = e.toString().replaceFirst('Exception: ', '');
-        _isLoading = false;
-      });
+      if (cached.isNotEmpty) {
+        setState(() {
+          _tasks = cached.map(_mapApiTaskToUiTask).toList();
+          _isLoading = false;
+        });
+      } else {
+        setState(() {
+          _errorMessage = e.toString().replaceFirst('Exception: ', '');
+          _isLoading = false;
+        });
+      }
     }
   }
 
@@ -150,12 +171,58 @@ class _TaskListScreenState extends State<TaskListScreen> {
                     color: Theme.of(context).brightness == Brightness.dark ? Colors.white : _adaiBrown,
                   ),
                 ),
-                const CircleAvatar(
-                  radius: 20,
-                  backgroundImage: NetworkImage(
-                    'https://dashboard-wally-process-interne.adaiexpertise.fr/logo_sans_fond.png',
-                  ),
-                  backgroundColor: Colors.transparent,
+                Row(
+                  children: [
+                    ListenableBuilder(
+                      listenable: SyncService.instance,
+                      builder: (context, _) {
+                        final sync = SyncService.instance;
+                        final total = sync.pendingCount + sync.failedCount;
+                        if (total == 0 && connectivityService.isOnline) {
+                          return const SizedBox.shrink();
+                        }
+                        final hasFailed = sync.failedCount > 0;
+                        final badgeColor = hasFailed ? const Color(0xFFFF453A) : const Color(0xFFE57A44);
+                        return Padding(
+                          padding: const EdgeInsets.only(right: 10),
+                          child: GestureDetector(
+                            onTap: () => SyncService.instance.syncNow(),
+                            child: Stack(
+                              clipBehavior: Clip.none,
+                              children: [
+                                Icon(
+                                  connectivityService.isOnline ? Icons.sync : Icons.cloud_off_outlined,
+                                  color: badgeColor,
+                                ),
+                                if (total > 0)
+                                  Positioned(
+                                    right: -4,
+                                    top: -4,
+                                    child: Container(
+                                      padding: const EdgeInsets.all(3),
+                                      decoration: BoxDecoration(color: badgeColor, shape: BoxShape.circle),
+                                      constraints: const BoxConstraints(minWidth: 16, minHeight: 16),
+                                      child: Text(
+                                        '$total',
+                                        textAlign: TextAlign.center,
+                                        style: const TextStyle(color: Colors.white, fontSize: 10, fontWeight: FontWeight.w700),
+                                      ),
+                                    ),
+                                  ),
+                              ],
+                            ),
+                          ),
+                        );
+                      },
+                    ),
+                    const CircleAvatar(
+                      radius: 20,
+                      backgroundImage: NetworkImage(
+                        'https://dashboard-wally-process-interne.adaiexpertise.fr/logo_sans_fond.png',
+                      ),
+                      backgroundColor: Colors.transparent,
+                    ),
+                  ],
                 ),
               ],
             ),

@@ -118,6 +118,77 @@ class Task {
       trackingDuration: json['tracking_duration'],
     );
   }
+
+    Map<String, dynamic> toJson() {
+    return {
+      'id': id,
+      'project_id': projectId,
+      'sprint_id': sprintId,
+      'assigned_to_id': assignedToId,
+      'created_by_id': createdById,
+      'project': projectId != null ? {'id': projectId, 'name': projectName} : null,
+      'sprint': sprintId != null ? {'id': sprintId, 'name': sprintName} : null,
+      'assigned_to': assignedToId != null ? {'id': assignedToId, 'name': assignedToName} : null,
+      'created_by': createdById != null ? {'id': createdById, 'name': createdByName} : null,
+      'title': title,
+      'description': description,
+      'priority': priority,
+      'status': status,
+      'deadline': deadline?.toIso8601String(),
+      'estimated_duration_minutes': estimatedDurationMinutes,
+      'completed_at': completedAt?.toIso8601String(),
+      'recurrence_paused_at': recurrencePausedAt?.toIso8601String(),
+      'recurrence_resumed_at': recurrenceResumedAt?.toIso8601String(),
+      'started_at': startedAt?.toIso8601String(),
+      'estimated_hours': estimatedHours,
+      'time_exceeded_notified_at': timeExceededNotifiedAt?.toIso8601String(),
+      'created_at': createdAt?.toIso8601String(),
+      'updated_at': updatedAt.toIso8601String(),
+      'deleted_at': deletedAt?.toIso8601String(),
+      'tracking_paused': trackingPaused,
+      'tracking_duration': trackingDuration,
+    };
+  }
+
+  // Utilisé par la synchro hors ligne pour appliquer une mise à jour
+  // optimiste locale sans attendre la réponse du serveur.
+  Task copyWith({
+    String? status,
+    DateTime? startedAt,
+    DateTime? completedAt,
+    bool? trackingPaused,
+    DateTime? updatedAt,
+  }) {
+    return Task(
+      id: id,
+      projectId: projectId,
+      sprintId: sprintId,
+      assignedToId: assignedToId,
+      createdById: createdById,
+      projectName: projectName,
+      sprintName: sprintName,
+      assignedToName: assignedToName,
+      createdByName: createdByName,
+      title: title,
+      description: description,
+      priority: priority,
+      status: status ?? this.status,
+      deadline: deadline,
+      estimatedDurationMinutes: estimatedDurationMinutes,
+      completedAt: completedAt ?? this.completedAt,
+      recurrencePausedAt: recurrencePausedAt,
+      recurrenceResumedAt: recurrenceResumedAt,
+      startedAt: startedAt ?? this.startedAt,
+      estimatedHours: estimatedHours,
+      timeExceededNotifiedAt: timeExceededNotifiedAt,
+      createdAt: createdAt,
+      updatedAt: updatedAt ?? this.updatedAt,
+      deletedAt: deletedAt,
+      trackingPaused: trackingPaused ?? this.trackingPaused,
+      trackingDuration: trackingDuration,
+    );
+  }
+
 }
 
 // GET /tasks/{id}/history

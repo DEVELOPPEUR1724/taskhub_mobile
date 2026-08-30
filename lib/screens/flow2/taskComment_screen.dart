@@ -4,6 +4,8 @@ import 'dart:typed_data';
 import 'taskUploadImg_screen.dart';
 import 'imageViewer_screen.dart';
 import '../../services/comment_service.dart';
+import '../../services/connectivity_service.dart';
+import '../../services/sync_service.dart';
 import '../../models/comment.dart' as api;
 
 final commentService = CommentService();
@@ -98,21 +100,21 @@ class _TaskCommentScreenState extends State<TaskCommentScreen> {
     final text = _commentController.text.trim();
     if (text.isEmpty) return;
 
-    // Correction : ajout optimiste retiré du bloc principal. On ajoute le
-    // commentaire localement seulement APRÈS confirmation de l'API, pour ne
-    // jamais afficher un commentaire qui n'a pas réellement été envoyé.
+    // Synchronisation hors ligne : le commentaire passe par la file
+    // d'attente locale (SyncService), envoyé immédiatement si en ligne,
+    // conservé sinon. On l'affiche tout de suite (optimiste), sans attendre
+    // la confirmation du serveur.
     try {
-      // Correction : "await" manquant — sans lui, le try/catch ne pouvait
-      // pas intercepter les erreurs réseau/serveur (401, 422, etc.), qui
-      // partaient dans un Future ignoré.
-      final apiComment = await commentService.commentAjout(widget.taskId, body: text);
-
+      await SyncService.instance.queueTextComment(widget.taskId, text);
       if (!mounted) return;
       setState(() {
-        _comments.add(_mapApiCommentToUiTask(apiComment));
+        _comments.add(Comment(
+          author: 'Vous',
+          avatarUrl: 'https://i.pravatar.cc/100?u=me',
+          timestamp: "À l'instant",
+          message: text,
+        ));
       });
-      // Correction : le champ est maintenant vidé en cas de SUCCÈS (avant,
-      // il n'était vidé qu'en cas d'échec, ce qui était inversé).
       _commentController.clear();
     } catch (e) {
       if (!mounted) return;
@@ -355,6 +357,12 @@ class _CommentInputBar extends StatelessWidget {
                   ),
                   GestureDetector(
                     onTap: () async {
+                      if (!connectivityService.isOnline) {
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          const SnackBar(content: Text('Les photos nécessitent une connexion.')),
+                        );
+                        return;
+                      }
                       final result = await Navigator.of(context).push<Map<String, dynamic>>(
                         MaterialPageRoute(
                           builder: (context) => const TaskUploadImgScreen(),
