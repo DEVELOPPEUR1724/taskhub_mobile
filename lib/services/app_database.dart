@@ -3,6 +3,7 @@ import 'dart:convert';
 import 'package:drift/drift.dart';
 
 import '../models/task.dart';
+import '../models/workday.dart';
 import 'db_connection_unsupported.dart' if (dart.library.io) 'db_connection_io.dart' as impl;
 
 part 'app_database.g.dart';
@@ -26,7 +27,13 @@ class TasksCache extends Table {
 @DataClassName('PendingActionRow')
 class PendingActions extends Table {
   IntColumn get id => integer().autoIncrement()();
-  TextColumn get type => text()(); // task.start | task.pause | task.resume | task.complete | comment.create
+  // task.start | task.pause | task.resume | task.complete | comment.create |
+  // workday.start | workday.pause.start | workday.pause.end | workday.end
+  TextColumn get type => text()();
+  // Sans objet pour les actions workday.* (le pointage est identifié par
+  // l'utilisateur + le jour côté serveur, pas par un id) : on y met 0, une
+  // valeur qui ne correspond à aucune vraie tâche, plutôt que de rendre la
+  // colonne nullable (éviterait une migration de schéma pour un simple flag).
   IntColumn get taskId => integer()();
   TextColumn get body => text().nullable()(); // uniquement pour comment.create
   DateTimeColumn get createdAt => dateTime()(); // devient action.timestamp ET clé d'ordre FIFO
@@ -38,22 +45,45 @@ class PendingActions extends Table {
 extension PendingActionPayload on PendingActionRow {
   // Forme exacte attendue par POST /api/sync (un élément du tableau "actions").
   Map<String, dynamic> toActionPayload() {
+    final isWorkday = type.startsWith('workday.');
     return {
       'type': type,
-      'task_id': taskId,
+      if (!isWorkday) 'task_id': taskId,
       'timestamp': createdAt.toUtc().toIso8601String(),
       if (body != null) 'body': body,
     };
   }
 }
 
-@DriftDatabase(tables: [TasksCache, PendingActions])
+// Cache local du pointage du jour (lecture hors ligne) — une ligne par jour
+// (date locale au format YYYY-MM-DD), écrasée à chaque nouveau jour.
+@DataClassName('CachedWorkdayRow')
+class WorkdayCache extends Table {
+  TextColumn get date => text()();
+  TextColumn get json => text()();
+  DateTimeColumn get updatedAt => dateTime()();
+
+  @override
+  Set<Column> get primaryKey => {date};
+}
+
+@DriftDatabase(tables: [TasksCache, PendingActions, WorkdayCache])
 class AppDatabase extends _$AppDatabase {
   AppDatabase._() : super(impl.connect());
   static final AppDatabase instance = AppDatabase._();
 
   @override
-  int get schemaVersion => 1;
+  int get schemaVersion => 2;
+
+  @override
+  MigrationStrategy get migration => MigrationStrategy(
+        onCreate: (m) => m.createAll(),
+        onUpgrade: (m, from, to) async {
+          if (from < 2) {
+            await m.createTable(workdayCache);
+          }
+        },
+      );
 
   bool? _available;
 
@@ -168,7 +198,12 @@ class AppDatabase extends _$AppDatabase {
   }
 
   Future<Set<int>> getTaskIdsWithPendingActions() async {
-    final query = selectOnly(pendingActions, distinct: true)..addColumns([pendingActions.taskId]);
+    // Les actions workday.* portent un taskId=0 factice (voir PendingActions) :
+    // on les exclut explicitement pour ne pas polluer l'ensemble des vraies
+    // tâches à ne pas écraser lors du prochain pull.
+    final query = selectOnly(pendingActions, distinct: true)
+      ..addColumns([pendingActions.taskId])
+      ..where(pendingActions.type.like('task.%'));
     final rows = await query.get();
     return rows.map((row) => row.read(pendingActions.taskId)!).toSet();
   }
@@ -181,5 +216,26 @@ class AppDatabase extends _$AppDatabase {
     await (update(pendingActions)..where((a) => a.id.equals(id))).write(
       const PendingActionsCompanion(status: Value('pending'), lastError: Value(null)),
     );
+  }
+
+  // ---- workday_cache ----
+
+  String _todayKey() {
+    final now = DateTime.now();
+    return '${now.year.toString().padLeft(4, '0')}-${now.month.toString().padLeft(2, '0')}-${now.day.toString().padLeft(2, '0')}';
+  }
+
+  Future<void> upsertTodayWorkday(Workday workday) async {
+    await into(workdayCache).insertOnConflictUpdate(WorkdayCacheCompanion.insert(
+      date: _todayKey(),
+      json: jsonEncode(workday.toJson()),
+      updatedAt: DateTime.now(),
+    ));
+  }
+
+  Future<Workday?> getCachedTodayWorkday() async {
+    final row = await (select(workdayCache)..where((w) => w.date.equals(_todayKey()))).getSingleOrNull();
+    if (row == null) return null;
+    return Workday.fromJson(jsonDecode(row.json));
   }
 }

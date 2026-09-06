@@ -707,17 +707,249 @@ class PendingActionsCompanion extends UpdateCompanion<PendingActionRow> {
   }
 }
 
+class $WorkdayCacheTable extends WorkdayCache
+    with TableInfo<$WorkdayCacheTable, CachedWorkdayRow> {
+  @override
+  final GeneratedDatabase attachedDatabase;
+  final String? _alias;
+  $WorkdayCacheTable(this.attachedDatabase, [this._alias]);
+  static const VerificationMeta _dateMeta = const VerificationMeta('date');
+  @override
+  late final GeneratedColumn<String> date = GeneratedColumn<String>(
+      'date', aliasedName, false,
+      type: DriftSqlType.string, requiredDuringInsert: true);
+  static const VerificationMeta _jsonMeta = const VerificationMeta('json');
+  @override
+  late final GeneratedColumn<String> json = GeneratedColumn<String>(
+      'json', aliasedName, false,
+      type: DriftSqlType.string, requiredDuringInsert: true);
+  static const VerificationMeta _updatedAtMeta =
+      const VerificationMeta('updatedAt');
+  @override
+  late final GeneratedColumn<DateTime> updatedAt = GeneratedColumn<DateTime>(
+      'updated_at', aliasedName, false,
+      type: DriftSqlType.dateTime, requiredDuringInsert: true);
+  @override
+  List<GeneratedColumn> get $columns => [date, json, updatedAt];
+  @override
+  String get aliasedName => _alias ?? actualTableName;
+  @override
+  String get actualTableName => $name;
+  static const String $name = 'workday_cache';
+  @override
+  VerificationContext validateIntegrity(Insertable<CachedWorkdayRow> instance,
+      {bool isInserting = false}) {
+    final context = VerificationContext();
+    final data = instance.toColumns(true);
+    if (data.containsKey('date')) {
+      context.handle(
+          _dateMeta, date.isAcceptableOrUnknown(data['date']!, _dateMeta));
+    } else if (isInserting) {
+      context.missing(_dateMeta);
+    }
+    if (data.containsKey('json')) {
+      context.handle(
+          _jsonMeta, json.isAcceptableOrUnknown(data['json']!, _jsonMeta));
+    } else if (isInserting) {
+      context.missing(_jsonMeta);
+    }
+    if (data.containsKey('updated_at')) {
+      context.handle(_updatedAtMeta,
+          updatedAt.isAcceptableOrUnknown(data['updated_at']!, _updatedAtMeta));
+    } else if (isInserting) {
+      context.missing(_updatedAtMeta);
+    }
+    return context;
+  }
+
+  @override
+  Set<GeneratedColumn> get $primaryKey => {date};
+  @override
+  CachedWorkdayRow map(Map<String, dynamic> data, {String? tablePrefix}) {
+    final effectivePrefix = tablePrefix != null ? '$tablePrefix.' : '';
+    return CachedWorkdayRow(
+      date: attachedDatabase.typeMapping
+          .read(DriftSqlType.string, data['${effectivePrefix}date'])!,
+      json: attachedDatabase.typeMapping
+          .read(DriftSqlType.string, data['${effectivePrefix}json'])!,
+      updatedAt: attachedDatabase.typeMapping
+          .read(DriftSqlType.dateTime, data['${effectivePrefix}updated_at'])!,
+    );
+  }
+
+  @override
+  $WorkdayCacheTable createAlias(String alias) {
+    return $WorkdayCacheTable(attachedDatabase, alias);
+  }
+}
+
+class CachedWorkdayRow extends DataClass
+    implements Insertable<CachedWorkdayRow> {
+  final String date;
+  final String json;
+  final DateTime updatedAt;
+  const CachedWorkdayRow(
+      {required this.date, required this.json, required this.updatedAt});
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    map['date'] = Variable<String>(date);
+    map['json'] = Variable<String>(json);
+    map['updated_at'] = Variable<DateTime>(updatedAt);
+    return map;
+  }
+
+  WorkdayCacheCompanion toCompanion(bool nullToAbsent) {
+    return WorkdayCacheCompanion(
+      date: Value(date),
+      json: Value(json),
+      updatedAt: Value(updatedAt),
+    );
+  }
+
+  factory CachedWorkdayRow.fromJson(Map<String, dynamic> json,
+      {ValueSerializer? serializer}) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return CachedWorkdayRow(
+      date: serializer.fromJson<String>(json['date']),
+      json: serializer.fromJson<String>(json['json']),
+      updatedAt: serializer.fromJson<DateTime>(json['updatedAt']),
+    );
+  }
+  @override
+  Map<String, dynamic> toJson({ValueSerializer? serializer}) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return <String, dynamic>{
+      'date': serializer.toJson<String>(date),
+      'json': serializer.toJson<String>(json),
+      'updatedAt': serializer.toJson<DateTime>(updatedAt),
+    };
+  }
+
+  CachedWorkdayRow copyWith(
+          {String? date, String? json, DateTime? updatedAt}) =>
+      CachedWorkdayRow(
+        date: date ?? this.date,
+        json: json ?? this.json,
+        updatedAt: updatedAt ?? this.updatedAt,
+      );
+  CachedWorkdayRow copyWithCompanion(WorkdayCacheCompanion data) {
+    return CachedWorkdayRow(
+      date: data.date.present ? data.date.value : this.date,
+      json: data.json.present ? data.json.value : this.json,
+      updatedAt: data.updatedAt.present ? data.updatedAt.value : this.updatedAt,
+    );
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('CachedWorkdayRow(')
+          ..write('date: $date, ')
+          ..write('json: $json, ')
+          ..write('updatedAt: $updatedAt')
+          ..write(')'))
+        .toString();
+  }
+
+  @override
+  int get hashCode => Object.hash(date, json, updatedAt);
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      (other is CachedWorkdayRow &&
+          other.date == this.date &&
+          other.json == this.json &&
+          other.updatedAt == this.updatedAt);
+}
+
+class WorkdayCacheCompanion extends UpdateCompanion<CachedWorkdayRow> {
+  final Value<String> date;
+  final Value<String> json;
+  final Value<DateTime> updatedAt;
+  final Value<int> rowid;
+  const WorkdayCacheCompanion({
+    this.date = const Value.absent(),
+    this.json = const Value.absent(),
+    this.updatedAt = const Value.absent(),
+    this.rowid = const Value.absent(),
+  });
+  WorkdayCacheCompanion.insert({
+    required String date,
+    required String json,
+    required DateTime updatedAt,
+    this.rowid = const Value.absent(),
+  })  : date = Value(date),
+        json = Value(json),
+        updatedAt = Value(updatedAt);
+  static Insertable<CachedWorkdayRow> custom({
+    Expression<String>? date,
+    Expression<String>? json,
+    Expression<DateTime>? updatedAt,
+    Expression<int>? rowid,
+  }) {
+    return RawValuesInsertable({
+      if (date != null) 'date': date,
+      if (json != null) 'json': json,
+      if (updatedAt != null) 'updated_at': updatedAt,
+      if (rowid != null) 'rowid': rowid,
+    });
+  }
+
+  WorkdayCacheCompanion copyWith(
+      {Value<String>? date,
+      Value<String>? json,
+      Value<DateTime>? updatedAt,
+      Value<int>? rowid}) {
+    return WorkdayCacheCompanion(
+      date: date ?? this.date,
+      json: json ?? this.json,
+      updatedAt: updatedAt ?? this.updatedAt,
+      rowid: rowid ?? this.rowid,
+    );
+  }
+
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    if (date.present) {
+      map['date'] = Variable<String>(date.value);
+    }
+    if (json.present) {
+      map['json'] = Variable<String>(json.value);
+    }
+    if (updatedAt.present) {
+      map['updated_at'] = Variable<DateTime>(updatedAt.value);
+    }
+    if (rowid.present) {
+      map['rowid'] = Variable<int>(rowid.value);
+    }
+    return map;
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('WorkdayCacheCompanion(')
+          ..write('date: $date, ')
+          ..write('json: $json, ')
+          ..write('updatedAt: $updatedAt, ')
+          ..write('rowid: $rowid')
+          ..write(')'))
+        .toString();
+  }
+}
+
 abstract class _$AppDatabase extends GeneratedDatabase {
   _$AppDatabase(QueryExecutor e) : super(e);
   $AppDatabaseManager get managers => $AppDatabaseManager(this);
   late final $TasksCacheTable tasksCache = $TasksCacheTable(this);
   late final $PendingActionsTable pendingActions = $PendingActionsTable(this);
+  late final $WorkdayCacheTable workdayCache = $WorkdayCacheTable(this);
   @override
   Iterable<TableInfo<Table, Object?>> get allTables =>
       allSchemaEntities.whereType<TableInfo<Table, Object?>>();
   @override
   List<DatabaseSchemaEntity> get allSchemaEntities =>
-      [tasksCache, pendingActions];
+      [tasksCache, pendingActions, workdayCache];
 }
 
 typedef $$TasksCacheTableCreateCompanionBuilder = TasksCacheCompanion Function({
@@ -1099,6 +1331,149 @@ typedef $$PendingActionsTableProcessedTableManager = ProcessedTableManager<
     ),
     PendingActionRow,
     PrefetchHooks Function()>;
+typedef $$WorkdayCacheTableCreateCompanionBuilder = WorkdayCacheCompanion
+    Function({
+  required String date,
+  required String json,
+  required DateTime updatedAt,
+  Value<int> rowid,
+});
+typedef $$WorkdayCacheTableUpdateCompanionBuilder = WorkdayCacheCompanion
+    Function({
+  Value<String> date,
+  Value<String> json,
+  Value<DateTime> updatedAt,
+  Value<int> rowid,
+});
+
+class $$WorkdayCacheTableFilterComposer
+    extends Composer<_$AppDatabase, $WorkdayCacheTable> {
+  $$WorkdayCacheTableFilterComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnFilters<String> get date => $composableBuilder(
+      column: $table.date, builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<String> get json => $composableBuilder(
+      column: $table.json, builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<DateTime> get updatedAt => $composableBuilder(
+      column: $table.updatedAt, builder: (column) => ColumnFilters(column));
+}
+
+class $$WorkdayCacheTableOrderingComposer
+    extends Composer<_$AppDatabase, $WorkdayCacheTable> {
+  $$WorkdayCacheTableOrderingComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnOrderings<String> get date => $composableBuilder(
+      column: $table.date, builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<String> get json => $composableBuilder(
+      column: $table.json, builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<DateTime> get updatedAt => $composableBuilder(
+      column: $table.updatedAt, builder: (column) => ColumnOrderings(column));
+}
+
+class $$WorkdayCacheTableAnnotationComposer
+    extends Composer<_$AppDatabase, $WorkdayCacheTable> {
+  $$WorkdayCacheTableAnnotationComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  GeneratedColumn<String> get date =>
+      $composableBuilder(column: $table.date, builder: (column) => column);
+
+  GeneratedColumn<String> get json =>
+      $composableBuilder(column: $table.json, builder: (column) => column);
+
+  GeneratedColumn<DateTime> get updatedAt =>
+      $composableBuilder(column: $table.updatedAt, builder: (column) => column);
+}
+
+class $$WorkdayCacheTableTableManager extends RootTableManager<
+    _$AppDatabase,
+    $WorkdayCacheTable,
+    CachedWorkdayRow,
+    $$WorkdayCacheTableFilterComposer,
+    $$WorkdayCacheTableOrderingComposer,
+    $$WorkdayCacheTableAnnotationComposer,
+    $$WorkdayCacheTableCreateCompanionBuilder,
+    $$WorkdayCacheTableUpdateCompanionBuilder,
+    (
+      CachedWorkdayRow,
+      BaseReferences<_$AppDatabase, $WorkdayCacheTable, CachedWorkdayRow>
+    ),
+    CachedWorkdayRow,
+    PrefetchHooks Function()> {
+  $$WorkdayCacheTableTableManager(_$AppDatabase db, $WorkdayCacheTable table)
+      : super(TableManagerState(
+          db: db,
+          table: table,
+          createFilteringComposer: () =>
+              $$WorkdayCacheTableFilterComposer($db: db, $table: table),
+          createOrderingComposer: () =>
+              $$WorkdayCacheTableOrderingComposer($db: db, $table: table),
+          createComputedFieldComposer: () =>
+              $$WorkdayCacheTableAnnotationComposer($db: db, $table: table),
+          updateCompanionCallback: ({
+            Value<String> date = const Value.absent(),
+            Value<String> json = const Value.absent(),
+            Value<DateTime> updatedAt = const Value.absent(),
+            Value<int> rowid = const Value.absent(),
+          }) =>
+              WorkdayCacheCompanion(
+            date: date,
+            json: json,
+            updatedAt: updatedAt,
+            rowid: rowid,
+          ),
+          createCompanionCallback: ({
+            required String date,
+            required String json,
+            required DateTime updatedAt,
+            Value<int> rowid = const Value.absent(),
+          }) =>
+              WorkdayCacheCompanion.insert(
+            date: date,
+            json: json,
+            updatedAt: updatedAt,
+            rowid: rowid,
+          ),
+          withReferenceMapper: (p0) => p0
+              .map((e) => (e.readTable(table), BaseReferences(db, table, e)))
+              .toList(),
+          prefetchHooksCallback: null,
+        ));
+}
+
+typedef $$WorkdayCacheTableProcessedTableManager = ProcessedTableManager<
+    _$AppDatabase,
+    $WorkdayCacheTable,
+    CachedWorkdayRow,
+    $$WorkdayCacheTableFilterComposer,
+    $$WorkdayCacheTableOrderingComposer,
+    $$WorkdayCacheTableAnnotationComposer,
+    $$WorkdayCacheTableCreateCompanionBuilder,
+    $$WorkdayCacheTableUpdateCompanionBuilder,
+    (
+      CachedWorkdayRow,
+      BaseReferences<_$AppDatabase, $WorkdayCacheTable, CachedWorkdayRow>
+    ),
+    CachedWorkdayRow,
+    PrefetchHooks Function()>;
 
 class $AppDatabaseManager {
   final _$AppDatabase _db;
@@ -1107,4 +1482,6 @@ class $AppDatabaseManager {
       $$TasksCacheTableTableManager(_db, _db.tasksCache);
   $$PendingActionsTableTableManager get pendingActions =>
       $$PendingActionsTableTableManager(_db, _db.pendingActions);
+  $$WorkdayCacheTableTableManager get workdayCache =>
+      $$WorkdayCacheTableTableManager(_db, _db.workdayCache);
 }

@@ -10,6 +10,13 @@ class PauseEntry {
       endedAt: json['ended_at'] != null ? DateTime.parse(json['ended_at']) : null,
     );
   }
+
+  Map<String, dynamic> toJson() => {
+        'started_at': startedAt?.toIso8601String(),
+        'ended_at': endedAt?.toIso8601String(),
+      };
+
+  PauseEntry copyWith({DateTime? endedAt}) => PauseEntry(startedAt: startedAt, endedAt: endedAt ?? this.endedAt);
 }
 
 class Workday {
@@ -48,6 +55,42 @@ class Workday {
       pauses: json['pauses'] != null
           ? (json['pauses'] as List).map((e) => PauseEntry.fromJson(e)).toList()
           : const [],
+    );
+  }
+
+  Map<String, dynamic> toJson() => {
+        'status': status,
+        'started_at': startedAt?.toIso8601String(),
+        'ended_at': endedAt?.toIso8601String(),
+        'duration_minutes': durationMinutes,
+        'duration_label': durationLabel,
+        'pause_count': pauseCount,
+        'pause_duration': pauseDuration,
+        'is_paused': isPaused,
+        'pauses': pauses.map((p) => p.toJson()).toList(),
+      };
+
+  // Mutations optimistes locales : on ne recalcule pas durationMinutes/
+  // durationLabel côté client (dépend du temps écoulé, non fiable hors
+  // ligne) — seuls status/timestamps/pauses sont mis à jour immédiatement,
+  // le reste sera rafraîchi au prochain pull en ligne.
+  Workday copyWith({
+    String? status,
+    DateTime? startedAt,
+    DateTime? endedAt,
+    bool? isPaused,
+    List<PauseEntry>? pauses,
+  }) {
+    return Workday(
+      status: status ?? this.status,
+      startedAt: startedAt ?? this.startedAt,
+      endedAt: endedAt ?? this.endedAt,
+      durationMinutes: durationMinutes,
+      durationLabel: durationLabel,
+      pauseCount: pauses?.length ?? pauseCount,
+      pauseDuration: pauseDuration,
+      isPaused: isPaused ?? this.isPaused,
+      pauses: pauses ?? this.pauses,
     );
   }
 }

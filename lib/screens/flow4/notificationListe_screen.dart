@@ -15,7 +15,8 @@ class NotificationListeScreen extends StatefulWidget {
   const NotificationListeScreen({super.key});
 
   @override
-  State<NotificationListeScreen> createState() => _NotificationListeScreenState();
+  State<NotificationListeScreen> createState() =>
+      _NotificationListeScreenState();
 }
 
 class _NotificationListeScreenState extends State<NotificationListeScreen> {
@@ -120,118 +121,123 @@ class _NotificationListeScreenState extends State<NotificationListeScreen> {
     final colors = Theme.of(context).colorScheme;
     return Material(
       color: colors.surface,
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Padding(
-            padding: const EdgeInsets.fromLTRB(8, 16, 20, 8),
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                Row(
-                  children: [
-                    IconButton(
-                      icon: Icon(Icons.arrow_back, color: colors.onSurface),
-                      onPressed: () => Navigator.of(context).maybePop(),
-                    ),
-                    Text(
-                      'Notifications',
-                      style: TextStyle(
-                        fontSize: 24,
-                        fontWeight: FontWeight.bold,
-                        color: colors.onSurface,
+      child: SafeArea(
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Padding(
+              padding: const EdgeInsets.fromLTRB(8, 16, 20, 8),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Row(
+                    children: [
+                      IconButton(
+                        icon: Icon(Icons.arrow_back, color: colors.onSurface),
+                        onPressed: () => Navigator.of(context).maybePop(),
                       ),
-                    ),
-                  ],
-                ),
-                const CircleAvatar(
-                  radius: 20,
-                  backgroundImage: NetworkImage(
-                    'https://dashboard-wally-process-interne.adaiexpertise.fr/logo_sans_fond.png',
-                  ),
-                  backgroundColor: Colors.transparent,
-                ),
-              ],
-            ),
-          ),
-          SizedBox(
-            height: 40,
-            child: ListView(
-              scrollDirection: Axis.horizontal,
-              padding: const EdgeInsets.symmetric(horizontal: 16),
-              children: [
-                _FilterChip(
-                  label: 'Toutes',
-                  selected: _filter == NotificationFilter.toutes,
-                  onTap: () => _onFilterChanged(NotificationFilter.toutes),
-                ),
-                _FilterChip(
-                  label: 'Non lues',
-                  selected: _filter == NotificationFilter.nonLues,
-                  onTap: () => _onFilterChanged(NotificationFilter.nonLues),
-                ),
-              ],
-            ),
-          ),
-          const SizedBox(height: 8),
-          Expanded(
-            child: _isLoading
-                ? const Center(child: CircularProgressIndicator())
-                : _errorMessage != null
-                    ? Center(
-                        child: Padding(
-                          padding: const EdgeInsets.all(24),
-                          child: Column(
-                            mainAxisSize: MainAxisSize.min,
-                            children: [
-                              Text(
-                                _errorMessage!,
-                                textAlign: TextAlign.center,
-                                style: TextStyle(color: colors.onSurfaceVariant),
-                              ),
-                              const SizedBox(height: 12),
-                              TextButton(
-                                onPressed: _loadNotifications,
-                                child: const Text('Réessayer'),
-                              ),
-                            ],
-                          ),
+                      Text(
+                        'Notifications',
+                        style: TextStyle(
+                          fontSize: 24,
+                          fontWeight: FontWeight.bold,
+                          color: colors.onSurface,
                         ),
-                      )
-                    : _notifications.isEmpty
-                        ? Center(
-                            child: Text(
-                              'Aucune notification',
-                              style: TextStyle(color: colors.onSurfaceVariant),
+                      ),
+                    ],
+                  ),
+                  const CircleAvatar(
+                    radius: 20,
+                    backgroundImage: NetworkImage(
+                      'https://dashboard-wally-process-interne.adaiexpertise.fr/logo_sans_fond.png',
+                    ),
+                    backgroundColor: Colors.transparent,
+                  ),
+                ],
+              ),
+            ),
+            SizedBox(
+              height: 40,
+              child: ListView(
+                scrollDirection: Axis.horizontal,
+                padding: const EdgeInsets.symmetric(horizontal: 16),
+                children: [
+                  _FilterChip(
+                    label: 'Toutes',
+                    selected: _filter == NotificationFilter.toutes,
+                    onTap: () => _onFilterChanged(NotificationFilter.toutes),
+                  ),
+                  _FilterChip(
+                    label: 'Non lues',
+                    selected: _filter == NotificationFilter.nonLues,
+                    onTap: () => _onFilterChanged(NotificationFilter.nonLues),
+                  ),
+                ],
+              ),
+            ),
+            const SizedBox(height: 8),
+            Expanded(
+              child: _isLoading
+                  ? const Center(child: CircularProgressIndicator())
+                  : _errorMessage != null
+                      ? Center(
+                          child: Padding(
+                            padding: const EdgeInsets.all(24),
+                            child: Column(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                Text(
+                                  _errorMessage!,
+                                  textAlign: TextAlign.center,
+                                  style:
+                                      TextStyle(color: colors.onSurfaceVariant),
+                                ),
+                                const SizedBox(height: 12),
+                                TextButton(
+                                  onPressed: _loadNotifications,
+                                  child: const Text('Réessayer'),
+                                ),
+                              ],
                             ),
-                          )
-                        : ListView.builder(
-                            padding: const EdgeInsets.symmetric(horizontal: 16),
-                            itemCount: _notifications.length,
-                            itemBuilder: (context, index) {
-                              final notif = _notifications[index];
-                              return _NotificationTile(
-                                notification: notif,
-                                onMarkRead: () => _onNotificationTap(notif),
-                              );
-                            },
                           ),
-          ),
-          Padding(
-            padding: const EdgeInsets.symmetric(vertical: 12),
-            child: Center(
-              child: TextButton.icon(
-                onPressed: _markAllAsRead,
-                style: TextButton.styleFrom(foregroundColor: _adaiOrange),
-                icon: const Icon(Icons.check, size: 16),
-                label: const Text(
-                  'Tout marqué comme lu',
-                  style: TextStyle(fontWeight: FontWeight.w600),
+                        )
+                      : _notifications.isEmpty
+                          ? Center(
+                              child: Text(
+                                'Aucune notification',
+                                style:
+                                    TextStyle(color: colors.onSurfaceVariant),
+                              ),
+                            )
+                          : ListView.builder(
+                              padding:
+                                  const EdgeInsets.symmetric(horizontal: 16),
+                              itemCount: _notifications.length,
+                              itemBuilder: (context, index) {
+                                final notif = _notifications[index];
+                                return _NotificationTile(
+                                  notification: notif,
+                                  onMarkRead: () => _onNotificationTap(notif),
+                                );
+                              },
+                            ),
+            ),
+            Padding(
+              padding: const EdgeInsets.symmetric(vertical: 12),
+              child: Center(
+                child: TextButton.icon(
+                  onPressed: _markAllAsRead,
+                  style: TextButton.styleFrom(foregroundColor: _adaiOrange),
+                  icon: const Icon(Icons.check, size: 16),
+                  label: const Text(
+                    'Tout marqué comme lu',
+                    style: TextStyle(fontWeight: FontWeight.w600),
+                  ),
                 ),
               ),
             ),
-          ),
-        ],
+          ],
+        ),
       ),
     );
   }
@@ -266,7 +272,8 @@ class _FilterChip extends StatelessWidget {
         ),
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(20),
-          side: BorderSide(color: selected ? _adaiOrange : colors.outlineVariant),
+          side:
+              BorderSide(color: selected ? _adaiOrange : colors.outlineVariant),
         ),
       ),
     );
@@ -339,7 +346,8 @@ class _NotificationTile extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final colors = Theme.of(context).colorScheme;
-    final status = statusColorFor(context, _statusColorForType(notification.type));
+    final status =
+        statusColorFor(context, _statusColorForType(notification.type));
     return GestureDetector(
       onTap: onMarkRead,
       child: Container(
@@ -355,7 +363,8 @@ class _NotificationTile extends StatelessWidget {
                 color: status.bg,
                 shape: BoxShape.circle,
               ),
-              child: Icon(_iconForType(notification.type), color: status.fg, size: 20),
+              child: Icon(_iconForType(notification.type),
+                  color: status.fg, size: 20),
             ),
             const SizedBox(width: 12),
             Expanded(
@@ -373,7 +382,10 @@ class _NotificationTile extends StatelessWidget {
                   const SizedBox(height: 4),
                   Text(
                     notification.message ?? '',
-                    style: TextStyle(color: colors.onSurfaceVariant, fontSize: 13, height: 1.3),
+                    style: TextStyle(
+                        color: colors.onSurfaceVariant,
+                        fontSize: 13,
+                        height: 1.3),
                   ),
                 ],
               ),
@@ -384,12 +396,14 @@ class _NotificationTile extends StatelessWidget {
               children: [
                 Text(
                   _formatRelativeTime(notification.createdAt),
-                  style: TextStyle(color: colors.onSurfaceVariant, fontSize: 12),
+                  style:
+                      TextStyle(color: colors.onSurfaceVariant, fontSize: 12),
                 ),
                 if (!notification.isRead) ...[
                   const SizedBox(height: 8),
                   Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 5),
+                    padding:
+                        const EdgeInsets.symmetric(horizontal: 8, vertical: 5),
                     decoration: BoxDecoration(
                       color: colors.surfaceContainerHighest,
                       borderRadius: BorderRadius.circular(6),
@@ -404,7 +418,8 @@ class _NotificationTile extends StatelessWidget {
                             color: colors.onSurfaceVariant,
                             shape: BoxShape.circle,
                           ),
-                          child: const Icon(Icons.check, size: 9, color: Colors.white),
+                          child: const Icon(Icons.check,
+                              size: 9, color: Colors.white),
                         ),
                         const SizedBox(width: 5),
                         Text(

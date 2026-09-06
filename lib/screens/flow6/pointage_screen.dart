@@ -2,10 +2,8 @@ import 'package:flutter/material.dart';
 
 import 'pointageHistorique_screen.dart';
 import '../../models/workday.dart';
-import '../../services/pointage_service.dart';
+import '../../services/sync_service.dart';
 import '../../utils/french_date.dart';
-
-final _pointageService = PointageService();
 
 const _adaiOrange = Color(0xFFE57A44);
 const _adaiGreen = Color(0xFF32D74B);
@@ -50,7 +48,9 @@ class _PointageScreenState extends State<PointageScreen> {
       _errorMessage = null;
     });
     try {
-      final workday = await _pointageService.getToday();
+      // Essaie le réseau d'abord, retombe sur le cache local hors ligne
+      // (voir SyncService.getTodayWorkday).
+      final workday = await SyncService.instance.getTodayWorkday();
       if (!mounted) return;
       setState(() {
         _workday = workday;
@@ -65,11 +65,15 @@ class _PointageScreenState extends State<PointageScreen> {
     }
   }
 
-  Future<void> _runAction(Future<void> Function() action) async {
+  // Contrairement à avant, on ne recharge plus depuis le réseau après une
+  // action (ça échouerait hors ligne) : le résultat optimiste renvoyé par
+  // SyncService devient directement le nouvel état affiché.
+  Future<void> _runAction(Future<Workday> Function() action) async {
     setState(() => _isActionLoading = true);
     try {
-      await action();
-      await _loadToday();
+      final workday = await action();
+      if (!mounted) return;
+      setState(() => _workday = workday);
     } catch (e) {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
@@ -306,6 +310,7 @@ class _PointageScreenState extends State<PointageScreen> {
   }
 
   List<Widget> _buildActions(String status) {
+    final w = _workday!;
     switch (status) {
       case 'not_started':
         return [
@@ -313,7 +318,7 @@ class _PointageScreenState extends State<PointageScreen> {
             label: 'COMMENCER MA JOURNÉE',
             icon: Icons.play_circle_outline,
             color: _adaiGreen,
-            onPressed: _isActionLoading ? null : () => _runAction(_pointageService.startWorkday),
+            onPressed: _isActionLoading ? null : () => _runAction(() => SyncService.instance.queueStartWorkday(w)),
           ),
         ];
       case 'in_progress':
@@ -322,14 +327,14 @@ class _PointageScreenState extends State<PointageScreen> {
             label: 'PRENDRE UNE PAUSE',
             icon: Icons.pause_circle_outline,
             color: _adaiOrange,
-            onPressed: _isActionLoading ? null : () => _runAction(_pointageService.startPause),
+            onPressed: _isActionLoading ? null : () => _runAction(() => SyncService.instance.queueStartPause(w)),
           ),
           const SizedBox(height: 10),
           _ActionButton(
             label: 'TERMINER MA JOURNÉE',
             icon: Icons.stop_circle_outlined,
             color: const Color(0xFFFF453A),
-            onPressed: _isActionLoading ? null : () => _runAction(_pointageService.endWorkday),
+            onPressed: _isActionLoading ? null : () => _runAction(() => SyncService.instance.queueEndWorkday(w)),
           ),
         ];
       case 'paused':
@@ -338,14 +343,14 @@ class _PointageScreenState extends State<PointageScreen> {
             label: 'REPRENDRE',
             icon: Icons.play_circle_outline,
             color: _adaiGreen,
-            onPressed: _isActionLoading ? null : () => _runAction(_pointageService.endPause),
+            onPressed: _isActionLoading ? null : () => _runAction(() => SyncService.instance.queueEndPause(w)),
           ),
           const SizedBox(height: 10),
           _ActionButton(
             label: 'TERMINER MA JOURNÉE',
             icon: Icons.stop_circle_outlined,
             color: const Color(0xFFFF453A),
-            onPressed: _isActionLoading ? null : () => _runAction(_pointageService.endWorkday),
+            onPressed: _isActionLoading ? null : () => _runAction(() => SyncService.instance.queueEndWorkday(w)),
           ),
         ];
       default:

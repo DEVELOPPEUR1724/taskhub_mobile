@@ -1,7 +1,10 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 
 import './loading_screen.dart';
 import '../../services/auth_service.dart';
+import '../../services/push_service.dart';
 
 final authService = AuthService();
 
@@ -42,6 +45,10 @@ class _LoginScreenState extends State<LoginScreen> {
     print(result.user.name);
     print(result.user.role);
     print(result.token);
+
+    // Non bloquant : registerDevice() avale déjà ses propres erreurs (voir
+    // PushService), la connexion ne doit pas échouer si le push échoue.
+    unawaited(PushService.instance.registerDevice());
 
     if (!mounted) return;
     Navigator.of(context).pushReplacement(

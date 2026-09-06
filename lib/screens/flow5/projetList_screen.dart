@@ -4,6 +4,7 @@ import '../flow4/notificationListe_screen.dart';
 import 'projetDetail_screen.dart';
 import '../../services/notification_service.dart';
 import '../../services/project_service.dart';
+import '../../services/push_service.dart';
 import '../../models/project.dart' as api;
 import '../../utils/project_status.dart';
 
@@ -32,6 +33,17 @@ class _ProjetListScreenState extends State<ProjetListScreen> {
     super.initState();
     _loadUnreadNotifications();
     _loadProjects();
+    // Rafraîchit le badge dès qu'un push arrive (premier plan) ou que l'app
+    // revient au premier plan (reprise après un push reçu en arrière-plan) —
+    // sinon le badge ne se met à jour qu'au prochain aller-retour vers
+    // l'écran Notifications, jamais en direct.
+    PushService.instance.addListener(_loadUnreadNotifications);
+  }
+
+  @override
+  void dispose() {
+    PushService.instance.removeListener(_loadUnreadNotifications);
+    super.dispose();
   }
 
   Future<void> _loadUnreadNotifications() async {
