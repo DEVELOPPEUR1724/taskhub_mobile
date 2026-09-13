@@ -49,7 +49,7 @@ class _MainScaffoldState extends State<MainScaffold> {
         items: const [
           BottomNavigationBarItem(
             icon: Icon(Icons.auto_awesome_outlined),
-            label: 'Résumé IA',
+            label: 'Avancement',
           ),
           BottomNavigationBarItem(
             icon: Icon(Icons.folder_outlined),
