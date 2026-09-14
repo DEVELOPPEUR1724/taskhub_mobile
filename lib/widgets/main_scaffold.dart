@@ -1,14 +1,12 @@
 import 'package:flutter/material.dart';
 
+import 'assistant_launcher_button.dart';
 import '../screens/flow2/tasklist_screen.dart';
 import '../screens/flow3/conversationList_screen.dart';
 import '../screens/flow4/profilUser_screen.dart';
 import '../screens/flow4/resumeIA_screen.dart';
 import '../screens/flow5/projetList_screen.dart';
 import '../screens/flow6/pointage_screen.dart';
-
-
-
 
 const _adaiOrange = Color(0xFFE57A44);
 
@@ -35,9 +33,20 @@ class _MainScaffoldState extends State<MainScaffold> {
   Widget build(BuildContext context) {
     return Scaffold(
       body: SafeArea(
-        child: IndexedStack(
-          index: _selectedIndex,
-          children: _pages,
+        child: Stack(
+          children: [
+            IndexedStack(
+              index: _selectedIndex,
+              children: _pages,
+            ),
+            // Bouton flottant persistant sur tous les onglets, équivalent du
+            // lanceur de chat IA en bas à droite du dashboard web.
+            const Positioned(
+              bottom: 16,
+              right: 16,
+              child: AssistantLauncherButton(),
+            ),
+          ],
         ),
       ),
       bottomNavigationBar: BottomNavigationBar(
