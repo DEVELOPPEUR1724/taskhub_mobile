@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 import '../../services/assistant_service.dart';
+import 'assistant_history_screen.dart';
 
 const _adaiOrange = Color(0xFFE57A44);
 const _liveGreen = Color(0xFF32D74B);
@@ -12,7 +13,11 @@ const _liveGreen = Color(0xFF32D74B);
 // MainScaffold, équivalent du widget web
 // resources/views/assistant/widget.blade.php.
 class AssistantScreen extends StatefulWidget {
-  const AssistantScreen({super.key});
+  // Si fourni, l'écran s'ouvre directement sur cette conversation existante
+  // (reprise depuis l'historique) plutôt que sur une nouvelle conversation.
+  final int? initialConversationId;
+
+  const AssistantScreen({super.key, this.initialConversationId});
 
   @override
   State<AssistantScreen> createState() => _AssistantScreenState();
@@ -38,6 +43,7 @@ class _AssistantScreenState extends State<AssistantScreen> {
   final List<_ChatMessage> _messages = [];
   int? _conversationId;
   bool _isSending = false;
+  bool _isLoadingHistory = false;
 
   static const _suggestions = [
     'Quelles tâches sont bloquées aujourd\'hui ?',
@@ -46,9 +52,70 @@ class _AssistantScreenState extends State<AssistantScreen> {
   ];
 
   @override
+  void initState() {
+    super.initState();
+    if (widget.initialConversationId != null) {
+      _loadConversation(widget.initialConversationId!);
+    }
+  }
+
+  @override
   void dispose() {
     _controller.dispose();
     super.dispose();
+  }
+
+  Future<void> _loadConversation(int conversationId) async {
+    setState(() => _isLoadingHistory = true);
+    try {
+      final history =
+          await _assistantService.getConversationMessages(conversationId);
+      if (!mounted) return;
+      setState(() {
+        _conversationId = conversationId;
+        _messages
+          ..clear()
+          ..addAll(history.map((m) =>
+              _ChatMessage(m.content, isUser: m.isUser, links: m.links)));
+      });
+    } catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(e.toString().replaceFirst('Exception: ', '')),
+          backgroundColor: const Color(0xFFFF453A),
+        ),
+      );
+    } finally {
+      if (mounted) setState(() => _isLoadingHistory = false);
+    }
+  }
+
+  Future<void> _newChat() async {
+    setState(() {
+      _conversationId = null;
+      _messages.clear();
+    });
+    try {
+      // Crée la conversation côté serveur dès maintenant plutôt que
+      // d'attendre le premier message : si ça échoue, on reste quand
+      // même sur un chat vide utilisable — /ask créera la conversation
+      // implicitement au premier envoi (voir AssistantService.ask).
+      final conversationId = await _assistantService.createConversation();
+      if (!mounted) return;
+      setState(() => _conversationId = conversationId);
+    } catch (_) {
+      // Silencieux : cf. commentaire ci-dessus.
+    }
+  }
+
+  Future<void> _openHistory() async {
+    final selectedId = await Navigator.of(context).push<int>(
+      MaterialPageRoute(builder: (context) => const AssistantHistoryScreen()),
+    );
+    if (selectedId != null) {
+      _loadConversation(selectedId);
+    }
   }
 
   Future<void> _send(String text) async {
@@ -132,104 +199,124 @@ class _AssistantScreenState extends State<AssistantScreen> {
             ),
           ],
         ),
+        actions: [
+          IconButton(
+            tooltip: 'Nouveau chat',
+            onPressed: _isSending ? null : _newChat,
+            icon: const Icon(Icons.add_comment_outlined),
+          ),
+          IconButton(
+            tooltip: 'Historique',
+            onPressed: _openHistory,
+            icon: const Icon(Icons.history),
+          ),
+        ],
       ),
       body: SafeArea(
-        child: Column(
-          children: [
-            Expanded(
-              child: ListView(
-                padding: const EdgeInsets.all(16),
+        child: _isLoadingHistory
+            ? const Center(child: CircularProgressIndicator())
+            : Column(
                 children: [
-                  const _AssistantBubble(
-                    text:
-                        'Bonjour ! Je suis Copilot, ton assistant Friday. Pose-moi une question sur tes projets, tes tâches ou ta charge de travail.',
-                  ),
-                  const SizedBox(height: 16),
-                  ..._messages.map((m) => Padding(
-                        padding: const EdgeInsets.only(bottom: 12),
-                        child: m.isUser
-                            ? _UserBubble(text: m.text)
-                            : _AssistantBubble(
-                                text: m.text,
-                                links: m.links,
-                                isError: m.isError,
-                              ),
-                      )),
-                  if (_isSending)
-                    const Padding(
-                      padding: EdgeInsets.only(bottom: 12),
-                      child: _AssistantBubble(text: '...', isLoading: true),
-                    ),
-                  if (_messages.isEmpty && !_isSending) ...[
-                    const SizedBox(height: 4),
-                    Wrap(
-                      spacing: 8,
-                      runSpacing: 8,
-                      children: _suggestions
-                          .map((s) => OutlinedButton(
-                                onPressed: () => _send(s),
-                                style: OutlinedButton.styleFrom(
-                                  side: BorderSide(
-                                      color: _adaiOrange.withOpacity(0.4)),
-                                  shape: RoundedRectangleBorder(
-                                      borderRadius: BorderRadius.circular(10)),
-                                ),
-                                child: Text(s,
-                                    style: const TextStyle(fontSize: 12.5)),
-                              ))
-                          .toList(),
-                    ),
-                  ],
-                ],
-              ),
-            ),
-            SafeArea(
-              top: false,
-              child: Padding(
-                padding: const EdgeInsets.all(12),
-                child: Row(
-                  children: [
-                    Expanded(
-                      child: TextField(
-                        controller: _controller,
-                        minLines: 1,
-                        maxLines: 4,
-                        enabled: !_isSending,
-                        onSubmitted: _send,
-                        decoration: InputDecoration(
-                          hintText: 'Écris ta question...',
-                          filled: true,
-                          fillColor: colors.surfaceContainerHighest,
-                          border: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(24),
-                            borderSide: BorderSide.none,
-                          ),
-                          contentPadding: const EdgeInsets.symmetric(
-                              horizontal: 18, vertical: 12),
+                  Expanded(
+                    child: ListView(
+                      padding: const EdgeInsets.all(16),
+                      children: [
+                        const _AssistantBubble(
+                          text:
+                              'Bonjour ! Je suis Copilot, ton assistant Friday. Pose-moi une question sur tes projets, tes tâches ou ta charge de travail.',
                         ),
+                        const SizedBox(height: 16),
+                        ..._messages.map((m) => Padding(
+                              padding: const EdgeInsets.only(bottom: 12),
+                              child: m.isUser
+                                  ? _UserBubble(text: m.text)
+                                  : _AssistantBubble(
+                                      text: m.text,
+                                      links: m.links,
+                                      isError: m.isError,
+                                    ),
+                            )),
+                        if (_isSending)
+                          const Padding(
+                            padding: EdgeInsets.only(bottom: 12),
+                            child:
+                                _AssistantBubble(text: '...', isLoading: true),
+                          ),
+                        if (_messages.isEmpty && !_isSending) ...[
+                          const SizedBox(height: 4),
+                          Wrap(
+                            spacing: 8,
+                            runSpacing: 8,
+                            children: _suggestions
+                                .map((s) => OutlinedButton(
+                                      onPressed: () => _send(s),
+                                      style: OutlinedButton.styleFrom(
+                                        side: BorderSide(
+                                            color:
+                                                _adaiOrange.withOpacity(0.4)),
+                                        shape: RoundedRectangleBorder(
+                                            borderRadius:
+                                                BorderRadius.circular(10)),
+                                      ),
+                                      child: Text(s,
+                                          style:
+                                              const TextStyle(fontSize: 12.5)),
+                                    ))
+                                .toList(),
+                          ),
+                        ],
+                      ],
+                    ),
+                  ),
+                  SafeArea(
+                    top: false,
+                    child: Padding(
+                      padding: const EdgeInsets.all(12),
+                      child: Row(
+                        children: [
+                          Expanded(
+                            child: TextField(
+                              controller: _controller,
+                              minLines: 1,
+                              maxLines: 4,
+                              enabled: !_isSending,
+                              onSubmitted: _send,
+                              decoration: InputDecoration(
+                                hintText: 'Écris ta question...',
+                                filled: true,
+                                fillColor: colors.surfaceContainerHighest,
+                                border: OutlineInputBorder(
+                                  borderRadius: BorderRadius.circular(24),
+                                  borderSide: BorderSide.none,
+                                ),
+                                contentPadding: const EdgeInsets.symmetric(
+                                    horizontal: 18, vertical: 12),
+                              ),
+                            ),
+                          ),
+                          const SizedBox(width: 8),
+                          IconButton.filled(
+                            onPressed: _isSending
+                                ? null
+                                : () => _send(_controller.text),
+                            style: IconButton.styleFrom(
+                                backgroundColor: _adaiOrange),
+                            icon: _isSending
+                                ? const SizedBox(
+                                    width: 16,
+                                    height: 16,
+                                    child: CircularProgressIndicator(
+                                        strokeWidth: 2, color: Colors.white),
+                                  )
+                                : const Icon(Icons.send,
+                                    size: 18, color: Colors.white),
+                          ),
+                        ],
                       ),
                     ),
-                    const SizedBox(width: 8),
-                    IconButton.filled(
-                      onPressed:
-                          _isSending ? null : () => _send(_controller.text),
-                      style: IconButton.styleFrom(backgroundColor: _adaiOrange),
-                      icon: _isSending
-                          ? const SizedBox(
-                              width: 16,
-                              height: 16,
-                              child: CircularProgressIndicator(
-                                  strokeWidth: 2, color: Colors.white),
-                            )
-                          : const Icon(Icons.send,
-                              size: 18, color: Colors.white),
-                    ),
-                  ],
-                ),
+                  ),
+                ],
               ),
-            ),
-          ],
-        ),
       ),
     );
   }
