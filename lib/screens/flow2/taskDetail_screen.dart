@@ -15,12 +15,6 @@ import '../../widgets/document_upload_sheet.dart';
 
 const _adaiOrange = Color(0xFFE57A44);
 
-// Cf. UserRole::adminValues() côté Laravel — seuls ces rôles passent
-// DocumentPolicy::create/delete (avant même de vérifier l'appartenance du
-// document), donc on cache l'upload/la suppression pour les autres plutôt
-// que de laisser un 403 surprendre l'utilisateur au clic.
-const _documentManagerRoles = ['super_admin', 'admin_tech', 'admin'];
-
 class TaskDetailScreen extends StatefulWidget {
   final int taskId;
 
@@ -183,7 +177,7 @@ class _TaskDetailScreenState extends State<TaskDetailScreen> {
     try {
       final profile = await ProfilService().getProfil();
       if (!mounted) return;
-      setState(() => _canManageDocuments = _documentManagerRoles.contains(profile.role));
+      setState(() => _canManageDocuments = kDocumentManagerRoles.contains(profile.role));
     } catch (_) {
       // Reste à false : mieux vaut cacher l'upload que risquer un 403.
     }

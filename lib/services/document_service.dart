@@ -29,6 +29,12 @@ const kAllowedDocumentExtensions = [
 // Laravel.
 const kMaxDocumentSizeBytes = 20 * 1024 * 1024;
 
+// Cf. UserRole::adminValues() côté Laravel — seuls ces rôles passent
+// DocumentPolicy::create/delete (avant même de vérifier l'appartenance du
+// document) : à utiliser côté UI pour cacher l'upload/la suppression aux
+// autres plutôt que de laisser un 403 les surprendre au clic.
+const kDocumentManagerRoles = ['super_admin', 'admin_tech', 'admin'];
+
 class DocumentValidationException implements Exception {
   final String message;
   DocumentValidationException(this.message);

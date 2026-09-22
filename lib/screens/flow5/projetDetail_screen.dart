@@ -1,8 +1,13 @@
 import 'package:flutter/material.dart';
 
 import '../../models/project.dart' as api;
+import '../../models/document.dart';
 import '../../services/project_service.dart';
+import '../../services/document_service.dart';
+import '../../services/profil_service.dart';
 import '../../utils/project_status.dart';
+import '../../widgets/document_list_tile.dart';
+import '../../widgets/document_upload_sheet.dart';
 
 const _adaiOrange = Color(0xFFE57A44);
 
@@ -27,10 +32,113 @@ class _ProjetDetailScreenState extends State<ProjetDetailScreen> {
   bool _isLoading = true;
   String? _errorMessage;
 
+  final _documentService = DocumentService();
+  List<TaskDocument> _documents = [];
+  bool _isDocumentsLoading = true;
+  bool _canManageDocuments = false;
+  int? _downloadingDocumentId;
+
   @override
   void initState() {
     super.initState();
     _loadProject();
+    _loadDocuments();
+    _loadDocumentPermission();
+  }
+
+  Future<void> _loadDocumentPermission() async {
+    try {
+      final profile = await ProfilService().getProfil();
+      if (!mounted) return;
+      setState(() => _canManageDocuments = kDocumentManagerRoles.contains(profile.role));
+    } catch (_) {
+      // Reste à false : mieux vaut cacher l'upload que risquer un 403.
+    }
+  }
+
+  Future<void> _loadDocuments() async {
+    setState(() => _isDocumentsLoading = true);
+    try {
+      final documents = await _documentService.listForProject(widget.projectId);
+      if (!mounted) return;
+      setState(() => _documents = documents);
+    } catch (_) {
+      // Silencieux : section secondaire, ne bloque pas la consultation du projet.
+    } finally {
+      if (mounted) setState(() => _isDocumentsLoading = false);
+    }
+  }
+
+  Future<void> _uploadDocument() async {
+    final document = await showDocumentUploadSheet(
+      context,
+      onUpload: (bytes, fileName, {title, description}) => _documentService.uploadToProject(
+        widget.projectId,
+        bytes,
+        fileName,
+        title: title,
+        description: description,
+      ),
+    );
+    if (document != null && mounted) {
+      setState(() => _documents = [document, ..._documents]);
+    }
+  }
+
+  Future<void> _downloadDocument(TaskDocument document) async {
+    setState(() => _downloadingDocumentId = document.id);
+    try {
+      final path = await _documentService.downloadAndSave(document);
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Enregistré : $path')),
+      );
+    } catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(e.toString().replaceFirst('Exception: ', '')),
+          backgroundColor: const Color(0xFFFF453A),
+        ),
+      );
+    } finally {
+      if (mounted) setState(() => _downloadingDocumentId = null);
+    }
+  }
+
+  Future<void> _deleteDocument(TaskDocument document) async {
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Supprimer ce document ?'),
+        content: Text(document.title),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(false),
+            child: const Text('Annuler'),
+          ),
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(true),
+            child: const Text('Supprimer', style: TextStyle(color: Color(0xFFFF453A))),
+          ),
+        ],
+      ),
+    );
+    if (confirmed != true) return;
+
+    setState(() => _documents = _documents.where((d) => d.id != document.id).toList());
+    try {
+      await _documentService.delete(document.id);
+    } catch (e) {
+      if (!mounted) return;
+      setState(() => _documents = [..._documents, document]..sort((a, b) => a.id.compareTo(b.id)));
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(e.toString().replaceFirst('Exception: ', '')),
+          backgroundColor: const Color(0xFFFF453A),
+        ),
+      );
+    }
   }
 
   Future<void> _loadProject() async {
@@ -317,6 +425,42 @@ class _ProjetDetailScreenState extends State<ProjetDetailScreen> {
               ],
             ),
           ),
+        const SizedBox(height: 24),
+
+        Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+            Text(
+              'Documents',
+              style: TextStyle(fontSize: 16, fontWeight: FontWeight.w700, color: colors.onSurface),
+            ),
+            if (_canManageDocuments)
+              IconButton(
+                visualDensity: VisualDensity.compact,
+                tooltip: 'Ajouter un document',
+                icon: const Icon(Icons.add, color: _adaiOrange),
+                onPressed: _uploadDocument,
+              ),
+          ],
+        ),
+        if (_isDocumentsLoading)
+          const Padding(
+            padding: EdgeInsets.symmetric(vertical: 12),
+            child: Center(
+              child: SizedBox(width: 20, height: 20, child: CircularProgressIndicator(strokeWidth: 2)),
+            ),
+          )
+        else if (_documents.isEmpty)
+          const DocumentEmptyState()
+        else
+          for (final document in _documents)
+            DocumentListTile(
+              document: document,
+              downloading: _downloadingDocumentId == document.id,
+              canDelete: _canManageDocuments,
+              onTap: () => _downloadDocument(document),
+              onDelete: () => _deleteDocument(document),
+            ),
       ],
     );
   }
