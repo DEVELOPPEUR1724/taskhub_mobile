@@ -191,6 +191,45 @@ class Task {
 
 }
 
+// GET|POST|PATCH|DELETE /tasks/{id}/checklists
+class TaskChecklist {
+  final int id;
+  final int taskId;
+  final String title;
+  final bool isDone;
+  final DateTime? completedAt;
+
+  TaskChecklist({
+    required this.id,
+    required this.taskId,
+    required this.title,
+    required this.isDone,
+    this.completedAt,
+  });
+
+  factory TaskChecklist.fromJson(Map<String, dynamic> json) {
+    return TaskChecklist(
+      id: json['id'],
+      taskId: json['task_id'],
+      title: json['title'] ?? '',
+      isDone: json['is_done'] == true,
+      completedAt: json['completed_at'] != null
+          ? DateTime.parse(json['completed_at'])
+          : null,
+    );
+  }
+
+  TaskChecklist copyWith({bool? isDone}) {
+    return TaskChecklist(
+      id: id,
+      taskId: taskId,
+      title: title,
+      isDone: isDone ?? this.isDone,
+      completedAt: completedAt,
+    );
+  }
+}
+
 // GET /tasks/{id}/history
 class TaskTrackingSession {
   final DateTime? startedAt;

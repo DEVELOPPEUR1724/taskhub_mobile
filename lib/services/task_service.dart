@@ -85,6 +85,65 @@ class TaskService {
     }
   }
 
+  Future<List<TaskChecklist>> getChecklists(int taskId) async {
+    final response = await http.get(
+      Uri.parse("${ClientService.baseUrl}/tasks/$taskId/checklists"),
+      headers: await _headers(),
+    );
+
+    if (response.statusCode == 200) {
+      final json = jsonDecode(response.body);
+      final List<dynamic> data = json['data'] ?? [];
+      return data.map((e) => TaskChecklist.fromJson(e)).toList();
+    } else {
+      final error = jsonDecode(response.body);
+      throw Exception(error['message'] ?? 'Erreur lors du chargement de la checklist');
+    }
+  }
+
+  Future<TaskChecklist> addChecklistItem(int taskId, String title) async {
+    final response = await http.post(
+      Uri.parse("${ClientService.baseUrl}/tasks/$taskId/checklists"),
+      headers: await _headers(),
+      body: jsonEncode({'title': title}),
+    );
+
+    if (response.statusCode == 201) {
+      return TaskChecklist.fromJson(jsonDecode(response.body)['data']);
+    } else {
+      final error = jsonDecode(response.body);
+      throw Exception(error['message'] ?? 'Erreur lors de l\'ajout de l\'élément');
+    }
+  }
+
+  Future<TaskChecklist> setChecklistItemDone(
+      int taskId, int checklistId, bool isDone) async {
+    final response = await http.patch(
+      Uri.parse("${ClientService.baseUrl}/tasks/$taskId/checklists/$checklistId"),
+      headers: await _headers(),
+      body: jsonEncode({'is_done': isDone}),
+    );
+
+    if (response.statusCode == 200) {
+      return TaskChecklist.fromJson(jsonDecode(response.body)['data']);
+    } else {
+      final error = jsonDecode(response.body);
+      throw Exception(error['message'] ?? 'Erreur lors de la mise à jour');
+    }
+  }
+
+  Future<void> deleteChecklistItem(int taskId, int checklistId) async {
+    final response = await http.delete(
+      Uri.parse("${ClientService.baseUrl}/tasks/$taskId/checklists/$checklistId"),
+      headers: await _headers(),
+    );
+
+    if (response.statusCode != 200) {
+      final error = jsonDecode(response.body);
+      throw Exception(error['message'] ?? 'Erreur lors de la suppression');
+    }
+  }
+
   // Synchronisation hors-ligne : renvoie les tâches modifiées depuis `since`.
   // Note : l'app n'a pas de stockage local de tâches pour l'instant, donc ça
   // reste une brique isolée — rien ne consomme le résultat pour fusionner

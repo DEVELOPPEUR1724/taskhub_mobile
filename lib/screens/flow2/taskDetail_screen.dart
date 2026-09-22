@@ -5,17 +5,21 @@ import 'taskHistorique_screen.dart';
 import '../../services/task_service.dart';
 import '../../services/app_database.dart';
 import '../../services/sync_service.dart';
+import '../../services/document_service.dart';
+import '../../services/profil_service.dart';
 import '../../models/task.dart' as api;
+import '../../models/document.dart';
 import '../../theme/app_colors.dart';
+import '../../widgets/document_list_tile.dart';
+import '../../widgets/document_upload_sheet.dart';
 
 const _adaiOrange = Color(0xFFE57A44);
 
-class ChecklistItem {
-  final String label;
-  bool done;
-
-  ChecklistItem({required this.label, this.done = false});
-}
+// Cf. UserRole::adminValues() côté Laravel — seuls ces rôles passent
+// DocumentPolicy::create/delete (avant même de vérifier l'appartenance du
+// document), donc on cache l'upload/la suppression pour les autres plutôt
+// que de laisser un 403 surprendre l'utilisateur au clic.
+const _documentManagerRoles = ['super_admin', 'admin_tech', 'admin'];
 
 class TaskDetailScreen extends StatefulWidget {
   final int taskId;
@@ -33,12 +37,242 @@ class _TaskDetailScreenState extends State<TaskDetailScreen> {
   String? _errorMessage;
   api.Task? _task;
 
+  List<api.TaskChecklist> _checklist = [];
+  bool _isChecklistLoading = true;
+  bool _isAddingChecklistItem = false;
+
   final taskService = TaskService();
+
+  final _documentService = DocumentService();
+  List<TaskDocument> _documents = [];
+  bool _isDocumentsLoading = true;
+  bool _canManageDocuments = false;
+  int? _downloadingDocumentId;
 
   @override
   void initState() {
     super.initState();
     _loadDetailsTasks();
+    _loadChecklist();
+    _loadDocuments();
+    _loadDocumentPermission();
+  }
+
+  Future<void> _loadChecklist() async {
+    setState(() => _isChecklistLoading = true);
+    try {
+      final checklist = await taskService.getChecklists(widget.taskId);
+      if (!mounted) return;
+      setState(() => _checklist = checklist);
+    } catch (_) {
+      // Silencieux : la checklist est secondaire, la tâche reste consultable
+      // même si son chargement échoue (ex. hors ligne, non géré par la
+      // synchro pour cette ressource).
+    } finally {
+      if (mounted) setState(() => _isChecklistLoading = false);
+    }
+  }
+
+  Future<void> _toggleChecklistItem(api.TaskChecklist item, bool value) async {
+    final index = _checklist.indexWhere((c) => c.id == item.id);
+    if (index == -1) return;
+    setState(() => _checklist[index] = item.copyWith(isDone: value));
+    try {
+      final updated =
+          await taskService.setChecklistItemDone(widget.taskId, item.id, value);
+      if (!mounted) return;
+      setState(() => _checklist[index] = updated);
+    } catch (e) {
+      if (!mounted) return;
+      setState(() => _checklist[index] = item);
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(e.toString().replaceFirst('Exception: ', '')),
+          backgroundColor: const Color(0xFFFF453A),
+        ),
+      );
+    }
+  }
+
+  Future<void> _addChecklistItem(String title) async {
+    final trimmed = title.trim();
+    if (trimmed.isEmpty) return;
+    setState(() => _isAddingChecklistItem = true);
+    try {
+      final item = await taskService.addChecklistItem(widget.taskId, trimmed);
+      if (!mounted) return;
+      setState(() => _checklist = [..._checklist, item]);
+    } catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(e.toString().replaceFirst('Exception: ', '')),
+          backgroundColor: const Color(0xFFFF453A),
+        ),
+      );
+    } finally {
+      if (mounted) setState(() => _isAddingChecklistItem = false);
+    }
+  }
+
+  Future<void> _deleteChecklistItem(api.TaskChecklist item) async {
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Supprimer cet élément ?'),
+        content: Text(item.title),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(false),
+            child: const Text('Annuler'),
+          ),
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(true),
+            child: const Text('Supprimer',
+                style: TextStyle(color: Color(0xFFFF453A))),
+          ),
+        ],
+      ),
+    );
+    if (confirmed != true) return;
+
+    setState(() => _checklist = _checklist.where((c) => c.id != item.id).toList());
+    try {
+      await taskService.deleteChecklistItem(widget.taskId, item.id);
+    } catch (e) {
+      if (!mounted) return;
+      setState(() => _checklist = [..._checklist, item]
+        ..sort((a, b) => a.id.compareTo(b.id)));
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(e.toString().replaceFirst('Exception: ', '')),
+          backgroundColor: const Color(0xFFFF453A),
+        ),
+      );
+    }
+  }
+
+  Future<void> _promptAddChecklistItem() async {
+    final controller = TextEditingController();
+    final title = await showDialog<String>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Nouvel élément'),
+        content: TextField(
+          controller: controller,
+          autofocus: true,
+          decoration: const InputDecoration(hintText: 'Ex : Tests unitaires'),
+          onSubmitted: (value) => Navigator.of(context).pop(value),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(),
+            child: const Text('Annuler'),
+          ),
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(controller.text),
+            child: const Text('Ajouter'),
+          ),
+        ],
+      ),
+    );
+    if (title != null) _addChecklistItem(title);
+  }
+
+  Future<void> _loadDocumentPermission() async {
+    try {
+      final profile = await ProfilService().getProfil();
+      if (!mounted) return;
+      setState(() => _canManageDocuments = _documentManagerRoles.contains(profile.role));
+    } catch (_) {
+      // Reste à false : mieux vaut cacher l'upload que risquer un 403.
+    }
+  }
+
+  Future<void> _loadDocuments() async {
+    setState(() => _isDocumentsLoading = true);
+    try {
+      final documents = await _documentService.listForTask(widget.taskId);
+      if (!mounted) return;
+      setState(() => _documents = documents);
+    } catch (_) {
+      // Silencieux, comme la checklist : section secondaire, ne bloque pas
+      // la consultation de la tâche.
+    } finally {
+      if (mounted) setState(() => _isDocumentsLoading = false);
+    }
+  }
+
+  Future<void> _uploadDocument() async {
+    final document = await showDocumentUploadSheet(
+      context,
+      onUpload: (bytes, fileName, {title, description}) => _documentService.uploadToTask(
+        widget.taskId,
+        bytes,
+        fileName,
+        title: title,
+        description: description,
+      ),
+    );
+    if (document != null && mounted) {
+      setState(() => _documents = [document, ..._documents]);
+    }
+  }
+
+  Future<void> _downloadDocument(TaskDocument document) async {
+    setState(() => _downloadingDocumentId = document.id);
+    try {
+      final path = await _documentService.downloadAndSave(document);
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Enregistré : $path')),
+      );
+    } catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(e.toString().replaceFirst('Exception: ', '')),
+          backgroundColor: const Color(0xFFFF453A),
+        ),
+      );
+    } finally {
+      if (mounted) setState(() => _downloadingDocumentId = null);
+    }
+  }
+
+  Future<void> _deleteDocument(TaskDocument document) async {
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Supprimer ce document ?'),
+        content: Text(document.title),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(false),
+            child: const Text('Annuler'),
+          ),
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(true),
+            child: const Text('Supprimer', style: TextStyle(color: Color(0xFFFF453A))),
+          ),
+        ],
+      ),
+    );
+    if (confirmed != true) return;
+
+    setState(() => _documents = _documents.where((d) => d.id != document.id).toList());
+    try {
+      await _documentService.delete(document.id);
+    } catch (e) {
+      if (!mounted) return;
+      setState(() => _documents = [..._documents, document]..sort((a, b) => a.id.compareTo(b.id)));
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(e.toString().replaceFirst('Exception: ', '')),
+          backgroundColor: const Color(0xFFFF453A),
+        ),
+      );
+    }
   }
 
   Future<void> _loadDetailsTasks() async {
@@ -96,15 +330,7 @@ class _TaskDetailScreenState extends State<TaskDetailScreen> {
     }
   }
 
-  final List<ChecklistItem> _checklist = [
-    ChecklistItem(label: 'Créer la vue UI', done: true),
-    ChecklistItem(label: 'Intégrer les champs email & mot de passe', done: true),
-    ChecklistItem(label: 'Intégrer connexion biométrique'),
-    ChecklistItem(label: 'Gérer les erreurs de connexion'),
-    ChecklistItem(label: 'Tests unitaires'),
-  ];
-
-  int get _doneCount => _checklist.where((item) => item.done).length;
+  int get _doneCount => _checklist.where((item) => item.isDone).length;
 
   ({String label, AppStatusColor color}) get _statusInfo {
     switch (_task?.status) {
@@ -331,31 +557,122 @@ class _TaskDetailScreenState extends State<TaskDetailScreen> {
                             color: colors.onSurface,
                           ),
                         ),
-                        Text(
-                          '$_doneCount/${_checklist.length}',
-                          style: TextStyle(color: colors.onSurfaceVariant, fontSize: 13),
+                        Row(
+                          children: [
+                            if (!_isChecklistLoading)
+                              Text(
+                                '$_doneCount/${_checklist.length}',
+                                style: TextStyle(
+                                    color: colors.onSurfaceVariant, fontSize: 13),
+                              ),
+                            IconButton(
+                              visualDensity: VisualDensity.compact,
+                              tooltip: 'Ajouter un élément',
+                              icon: _isAddingChecklistItem
+                                  ? const SizedBox(
+                                      width: 16,
+                                      height: 16,
+                                      child: CircularProgressIndicator(strokeWidth: 2),
+                                    )
+                                  : const Icon(Icons.add, color: _adaiOrange),
+                              onPressed: _isAddingChecklistItem
+                                  ? null
+                                  : _promptAddChecklistItem,
+                            ),
+                          ],
                         ),
                       ],
                     ),
-                    const SizedBox(height: 8),
-                    for (final item in _checklist)
-                      CheckboxListTile(
-                        value: item.done,
-                        onChanged: (value) {
-                          setState(() => item.done = value ?? false);
-                        },
-                        controlAffinity: ListTileControlAffinity.leading,
-                        contentPadding: EdgeInsets.zero,
-                        dense: true,
-                        activeColor: _adaiOrange,
-                        title: Text(
-                          item.label,
-                          style: TextStyle(
-                            fontSize: 14,
-                            color: item.done ? colors.onSurfaceVariant : colors.onSurface,
+                    if (_isChecklistLoading)
+                      const Padding(
+                        padding: EdgeInsets.symmetric(vertical: 12),
+                        child: Center(
+                          child: SizedBox(
+                            width: 20,
+                            height: 20,
+                            child: CircularProgressIndicator(strokeWidth: 2),
                           ),
                         ),
-                      ),
+                      )
+                    else if (_checklist.isEmpty)
+                      Padding(
+                        padding: const EdgeInsets.symmetric(vertical: 12),
+                        child: Text(
+                          'Aucun élément pour l\'instant.',
+                          style: TextStyle(color: colors.onSurfaceVariant, fontSize: 13),
+                        ),
+                      )
+                    else
+                      for (final item in _checklist)
+                        CheckboxListTile(
+                          value: item.isDone,
+                          onChanged: (value) =>
+                              _toggleChecklistItem(item, value ?? false),
+                          controlAffinity: ListTileControlAffinity.leading,
+                          contentPadding: EdgeInsets.zero,
+                          dense: true,
+                          activeColor: _adaiOrange,
+                          title: Text(
+                            item.title,
+                            style: TextStyle(
+                              fontSize: 14,
+                              color: item.isDone
+                                  ? colors.onSurfaceVariant
+                                  : colors.onSurface,
+                            ),
+                          ),
+                          secondary: IconButton(
+                            visualDensity: VisualDensity.compact,
+                            tooltip: 'Supprimer',
+                            icon: const Icon(Icons.delete_outline,
+                                size: 20, color: Color(0xFFFF453A)),
+                            onPressed: () => _deleteChecklistItem(item),
+                          ),
+                        ),
+                    const SizedBox(height: 24),
+
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        Text(
+                          'Documents',
+                          style: TextStyle(
+                            fontSize: 16,
+                            fontWeight: FontWeight.w700,
+                            color: colors.onSurface,
+                          ),
+                        ),
+                        if (_canManageDocuments)
+                          IconButton(
+                            visualDensity: VisualDensity.compact,
+                            tooltip: 'Ajouter un document',
+                            icon: const Icon(Icons.add, color: _adaiOrange),
+                            onPressed: _uploadDocument,
+                          ),
+                      ],
+                    ),
+                    if (_isDocumentsLoading)
+                      const Padding(
+                        padding: EdgeInsets.symmetric(vertical: 12),
+                        child: Center(
+                          child: SizedBox(
+                            width: 20,
+                            height: 20,
+                            child: CircularProgressIndicator(strokeWidth: 2),
+                          ),
+                        ),
+                      )
+                    else if (_documents.isEmpty)
+                      const DocumentEmptyState()
+                    else
+                      for (final document in _documents)
+                        DocumentListTile(
+                          document: document,
+                          downloading: _downloadingDocumentId == document.id,
+                          canDelete: _canManageDocuments,
+                          onTap: () => _downloadDocument(document),
+                          onDelete: () => _deleteDocument(document),
+                        ),
                     const SizedBox(height: 100),
                   ],
                 ),
